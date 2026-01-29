@@ -152,14 +152,27 @@ def set_theme() -> None:
         <style>
         :root {
             --primary: #ff6f61;
-            --secondary: #635bff;
-            --mint: #40c9a2;
-            --ink: #1f1f1f;
+            --secondary: #4638ff;
+            --mint: #2abf97;
+            --ink: #0f172a;
+            --muted: #475569;
+            --surface: rgba(255, 255, 255, 0.92);
+            --surface-strong: rgba(255, 255, 255, 0.98);
+            --border: rgba(148, 163, 184, 0.25);
         }
         .stApp {
-            background: linear-gradient(120deg, #fff5f0, #eef2ff, #e6fff7);
-            animation: gradientShift 18s ease infinite;
-            background-size: 200% 200%;
+            color: var(--ink);
+            background: linear-gradient(140deg, #f8fafc 0%, #eef2ff 45%, #ecfeff 100%);
+            background-attachment: fixed;
+            font-family: "Inter", "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6, p, span, div {
+            color: var(--ink);
+        }
+        .stMarkdown p {
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.6;
         }
         @keyframes gradientShift {
             0% {background-position: 0% 50%;}
@@ -167,20 +180,26 @@ def set_theme() -> None:
             100% {background-position: 0% 50%;}
         }
         .hero {
-            padding: 1.5rem 2rem;
+            padding: 1.75rem 2.2rem;
             border-radius: 24px;
-            background: rgba(255, 255, 255, 0.75);
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+            background: var(--surface-strong);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+            border: 1px solid var(--border);
         }
         .hero h1 {
-            font-size: 2.6rem;
+            font-size: 2.5rem;
+            color: var(--ink);
             margin-bottom: 0.5rem;
+        }
+        .hero p {
+            color: var(--muted);
+            font-size: 1.05rem;
         }
         .floating-shape {
             width: 160px;
             height: 160px;
             border-radius: 50%;
-            background: rgba(99, 91, 255, 0.15);
+            background: rgba(70, 56, 255, 0.16);
             position: absolute;
             top: -40px;
             right: -30px;
@@ -194,7 +213,7 @@ def set_theme() -> None:
             display: inline-block;
             padding: 0.2rem 0.75rem;
             border-radius: 999px;
-            background: rgba(64, 201, 162, 0.15);
+            background: rgba(42, 191, 151, 0.18);
             color: #0f766e;
             font-weight: 600;
             margin-right: 0.5rem;
@@ -202,8 +221,8 @@ def set_theme() -> None:
         .lesson-card {
             padding: 1rem;
             border-radius: 20px;
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            background: var(--surface);
+            border: 1px solid var(--border);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .lesson-card:hover {
@@ -213,7 +232,7 @@ def set_theme() -> None:
         .exercise-card {
             padding: 1.5rem;
             border-radius: 24px;
-            background: white;
+            background: var(--surface-strong);
             box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
             animation: slideIn 0.6s ease;
         }
@@ -224,8 +243,15 @@ def set_theme() -> None:
         .stat-card {
             padding: 1rem;
             border-radius: 16px;
-            background: rgba(255, 255, 255, 0.75);
-            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: var(--surface);
+            border: 1px solid var(--border);
+        }
+        .auth-card {
+            padding: 1.5rem;
+            border-radius: 22px;
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
         }
         .auth-card {
             padding: 1.5rem;
@@ -237,13 +263,32 @@ def set_theme() -> None:
         .progress-bar {
             height: 10px;
             border-radius: 999px;
-            background: rgba(148, 163, 184, 0.2);
+            background: rgba(148, 163, 184, 0.28);
             overflow: hidden;
         }
         .progress-bar > span {
             display: block;
             height: 100%;
             background: linear-gradient(90deg, #ff6f61, #ffb347);
+        }
+        .stTabs [data-baseweb="tab"] {
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .stTabs [data-baseweb="tab"][aria-selected="true"] {
+            color: var(--ink);
+        }
+        .stTextInput input, .stTextArea textarea, .stSelectbox div, .stRadio div {
+            color: var(--ink) !important;
+        }
+        .stTextInput input, .stTextArea textarea {
+            background-color: #fff !important;
+            border: 1px solid rgba(148, 163, 184, 0.5) !important;
+            border-radius: 12px !important;
+        }
+        .stButton button {
+            border-radius: 12px;
+            font-weight: 600;
         }
         </style>
         """,
