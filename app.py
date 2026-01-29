@@ -51,6 +51,29 @@ VOCAB = [
     VocabItem("aprovechar", "to take advantage", "C1", "verbs"),
 ]
 
+EXTRA_DIALOGUES = [
+    {
+        "prompt": "You're ordering at a café. How do you politely ask for water?",
+        "answer": "Quisiera agua, por favor.",
+        "options": [
+            "¿Dónde está la estación?",
+            "Quisiera agua, por favor.",
+            "Gracias, hasta luego.",
+            "No entiendo.",
+        ],
+    },
+    {
+        "prompt": "A friend says: 'Buenos días'. How do you reply?",
+        "answer": "Buenos días.",
+        "options": ["Buenas noches.", "Buenos días.", "Adiós.", "Lo siento."],
+    },
+    {
+        "prompt": "You need the bill. What do you say?",
+        "answer": "La cuenta, por favor.",
+        "options": ["¿Qué hora es?", "La cuenta, por favor.", "Estoy perdido.", "Gracias."],
+    },
+]
+
 SENTENCES = [
     {
         "spanish": "Me llamo Sofía y soy de México.",
@@ -87,6 +110,30 @@ SENTENCES = [
         "english": "We took advantage of the meeting to present the strategy.",
         "level": "C1",
         "topic": "verbs",
+    },
+    {
+        "spanish": "Necesito comprar pan y verduras en el mercado.",
+        "english": "I need to buy bread and vegetables at the market.",
+        "level": "A2",
+        "topic": "food",
+    },
+    {
+        "spanish": "Siempre estudio por la mañana antes del trabajo.",
+        "english": "I always study in the morning before work.",
+        "level": "B1",
+        "topic": "verbs",
+    },
+    {
+        "spanish": "¿Podrías recomendarme un buen restaurante?",
+        "english": "Could you recommend a good restaurant?",
+        "level": "A2",
+        "topic": "places",
+    },
+    {
+        "spanish": "Por lo tanto, debemos practicar todos los días.",
+        "english": "Therefore, we should practice every day.",
+        "level": "B2",
+        "topic": "connectors",
     },
 ]
 
@@ -143,6 +190,7 @@ LESSONS = [
 
 DATA_DIR = Path("data")
 PROFILE_PATH = DATA_DIR / "profiles.json"
+DOM_ID_SAFE = "".join([str(x) for x in range(10)]) + "abcdefghijklmnopqrstuvwxyz-"
 
 
 def set_theme() -> None:
@@ -300,6 +348,23 @@ class Exercise:
     metadata: dict | None = None
 
 
+def default_session_state() -> dict:
+    return {
+        "lesson_id": None,
+        "exercises": [],
+        "index": 0,
+        "correct": 0,
+        "answered": False,
+        "feedback": "",
+        "last_answer": "",
+        "results": {},
+    }
+
+
+def sanitize_dom_id(value: str) -> str:
+    return "".join(char for char in value.lower() if char in DOM_ID_SAFE)
+
+
 def load_profiles() -> dict:
     if not PROFILE_PATH.exists():
         return {}
@@ -404,15 +469,10 @@ def init_state() -> None:
     if "profile" not in st.session_state:
         defaults = default_profile_state()
         apply_profile_state(defaults)
-    if "session" not in st.session_state:
-        st.session_state.session = {
-            "lesson_id": None,
-            "exercises": [],
-            "index": 0,
-            "correct": 0,
-            "answered": False,
-            "feedback": "",
-            "last_answer": "",
+    if "sessions" not in st.session_state:
+        st.session_state.sessions = {
+            "learn": default_session_state(),
+            "practice": default_session_state(),
         }
     if "variety" not in st.session_state:
         st.session_state.variety = [
@@ -420,6 +480,9 @@ def init_state() -> None:
             "fill_blank",
             "translate",
             "listening",
+            "listening_type",
+            "dialogue",
+            "cloze",
             "conversation",
             "word_order",
             "sentence_build",
@@ -518,6 +581,16 @@ def make_exercises(
                     metadata={"spanish": item.spanish, "english": item.english},
                 )
             )
+        if "listening_type" in variety:
+            exercises.append(
+                Exercise(
+                    kind="listening_type",
+                    prompt="Listen and type the Spanish word you hear.",
+                    answer=item.spanish,
+                    explanation=f"The word was **{item.spanish}**.",
+                    metadata={"spanish": item.spanish, "english": item.english},
+                )
+            )
 
     if "match" in variety:
         pair_items = vocab_pool[:4]
@@ -540,6 +613,18 @@ def make_exercises(
                 answer="buenos días",
                 options=["buenas noches", "buenos días", "adiós", "gracias"],
                 explanation="In the morning you say **buenos días**.",
+            )
+        )
+
+    if "dialogue" in variety:
+        dialogue = random.choice(EXTRA_DIALOGUES)
+        exercises.append(
+            Exercise(
+                kind="dialogue",
+                prompt=dialogue["prompt"],
+                answer=dialogue["answer"],
+                options=dialogue["options"],
+                explanation=f"A natural response is **{dialogue['answer']}**.",
             )
         )
 
@@ -568,6 +653,12 @@ def make_exercises(
                 metadata={"spanish": sentence["spanish"], "english": sentence["english"]},
             )
         )
+
+    if "cloze" in variety and sentence_pool:
+        sentence = random.choice(sentence_pool)
+        cloze = build_cloze(sentence)
+        if cloze:
+            exercises.append(cloze)
 
     random.shuffle(exercises)
     return exercises[:10]
@@ -604,7 +695,7 @@ def check_answer(exercise: Exercise, response: str) -> tuple[bool, str]:
 
 
 def update_mastery(exercise: Exercise, correct: bool) -> None:
-    if exercise.kind not in {"multiple_choice", "fill_blank", "translate", "listening"}:
+    if exercise.kind not in {"multiple_choice", "fill_blank", "translate", "listening", "listening_type", "cloze"}:
         return
     key = exercise.answer if exercise.kind not in {"multiple_choice", "listening"} else None
     if exercise.kind in {"multiple_choice", "listening"}:
@@ -718,7 +809,7 @@ def render_lesson_cards(selected_id: str | None) -> str:
     return selection
 
 
-def render_match_exercise(exercise: Exercise, key_prefix: str) -> str:
+def render_match_exercise(exercise: Exercise, key_prefix: str, index: int) -> str:
     pairs = exercise.extra["pairs"]
     st.write("Connect each Spanish word with its meaning:")
     left = list(pairs.keys())
@@ -728,13 +819,13 @@ def render_match_exercise(exercise: Exercise, key_prefix: str) -> str:
         selection = st.selectbox(
             f"{word}",
             options=right,
-            key=f"{key_prefix}-match-{st.session_state.session['index']}-{word}",
+            key=f"{key_prefix}-match-{index}-{word}",
         )
         selections.append(f"{word}:{selection}")
     return ";".join(selections)
 
 
-def render_word_order(exercise: Exercise, key_prefix: str) -> str:
+def render_word_order(exercise: Exercise, key_prefix: str, index: int) -> str:
     st.write("Tap the words in order (type them in the box):")
     st.caption("Words: " + ", ".join(exercise.extra["words"]))
     return st.text_input("Your sentence", key=f"{key_prefix}-word-order-{st.session_state.session['index']}")
@@ -822,20 +913,22 @@ def render_listening_exercise(exercise: Exercise, key_prefix: str) -> str:
     components.html(
         f"""
         <div style="display:flex; gap:12px; align-items:center; padding:8px 0;">
-            <button style="padding:8px 14px; border-radius:10px; border:1px solid #cbd5f5; background:#fff;">
+            <button id="audio-btn-{dom_id}" style="padding:8px 14px; border-radius:10px; border:1px solid #cbd5f5; background:#fff;">
                 🔊 Play audio
             </button>
-            <span style="color:#475569; font-size:14px;">Listen and pick the correct meaning.</span>
+            <span style="color:#475569; font-size:14px;">{helper_text}</span>
         </div>
         <script>
-            const button = document.currentScript.previousElementSibling.querySelector('button');
-            button.addEventListener('click', () => {{
-                const text = {payload};
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'es-ES';
-                window.speechSynthesis.cancel();
-                window.speechSynthesis.speak(utterance);
-            }});
+            const button = document.getElementById('audio-btn-{dom_id}');
+            if (button) {{
+                button.addEventListener('click', () => {{
+                    const text = {payload};
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'es-ES';
+                    window.speechSynthesis.cancel();
+                    window.speechSynthesis.speak(utterance);
+                }});
+            }}
         </script>
         """,
         height=70,
@@ -855,12 +948,12 @@ def render_exercise(exercise: Exercise, key_prefix: str) -> str:
         response = st.radio(
             "Pick one",
             exercise.options,
-            key=f"{key_prefix}-mc-{st.session_state.session['index']}",
+            key=f"{key_prefix}-mc-{index}",
         )
     elif exercise.kind in {"fill_blank", "translate"}:
-        response = st.text_input("Your answer", key=f"{key_prefix}-text-{st.session_state.session['index']}")
+        response = st.text_input("Your answer", key=f"{key_prefix}-text-{index}")
     elif exercise.kind == "match":
-        response = render_match_exercise(exercise, key_prefix)
+        response = render_match_exercise(exercise, key_prefix, index)
     elif exercise.kind == "word_order":
         response = render_word_order(exercise, key_prefix)
     elif exercise.kind == "sentence_build":
@@ -882,20 +975,17 @@ def render_exercise(exercise: Exercise, key_prefix: str) -> str:
 
 
 def render_session(selected_lesson: str, settings: dict, session_label: str) -> None:
-    session = st.session_state.session
+    session = st.session_state.sessions[session_label]
     if selected_lesson == "custom" and session["exercises"]:
         pass
     elif session["lesson_id"] != selected_lesson or not session["exercises"]:
+        session.update(default_session_state())
         session["lesson_id"] = selected_lesson
         session["exercises"] = make_exercises(
             selected_lesson,
             settings["difficulty"],
             settings["variety"],
         )
-        session["index"] = 0
-        session["correct"] = 0
-        session["answered"] = False
-        session["feedback"] = ""
 
     total = len(session["exercises"])
     index = session["index"]
@@ -904,7 +994,8 @@ def render_session(selected_lesson: str, settings: dict, session_label: str) -> 
 
     if index >= total:
         st.success("Lesson complete! Great work.")
-        st.session_state.progress[selected_lesson] = min(100, st.session_state.progress[selected_lesson] + 20)
+        if selected_lesson in st.session_state.progress:
+            st.session_state.progress[selected_lesson] = min(100, st.session_state.progress[selected_lesson] + 20)
         st.session_state.profile["xp"] += 25
         st.session_state.activity_log.append(
             {
@@ -918,24 +1009,38 @@ def render_session(selected_lesson: str, settings: dict, session_label: str) -> 
         )
         persist_profile_state()
         if st.button("Restart lesson"):
-            session["exercises"] = []
+            session.update(default_session_state())
+            session["lesson_id"] = selected_lesson
         return
 
     exercise = session["exercises"][index]
     key_prefix = f"{session_label}-{selected_lesson}"
-    response = render_exercise(exercise, key_prefix)
+    response = render_exercise(exercise, key_prefix, index)
     st.write("")
 
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("Check", key=f"{key_prefix}-check-answer"):
             correct, feedback = check_answer(exercise, response)
+            result = session["results"].get(index, {"mistake": False, "correct": False})
+            if result["correct"] and not result["mistake"]:
+                session["answered"] = True
+                session["feedback"] = "Already marked correct. Move to the next question when you're ready."
+                session["last_answer"] = response
+                return
+            if correct:
+                if not result["mistake"] and not result["correct"]:
+                    session["correct"] += 1
+                    st.session_state.profile["xp"] += 5
+                if result["mistake"]:
+                    feedback = f"{feedback} You got it now, but accuracy won't change because of the earlier miss."
+                result["correct"] = True
+            else:
+                result["mistake"] = True
+            session["results"][index] = result
             session["answered"] = True
             session["feedback"] = feedback
             session["last_answer"] = response
-            if correct:
-                session["correct"] += 1
-                st.session_state.profile["xp"] += 5
             update_mastery(exercise, correct)
             persist_profile_state()
     with col2:
@@ -950,7 +1055,8 @@ def render_session(selected_lesson: str, settings: dict, session_label: str) -> 
     if session["feedback"]:
         st.info(session["feedback"])
 
-    st.caption(f"Accuracy so far: {session['correct']} / {index + 1}")
+    attempted = len(session["results"])
+    st.caption(f"Accuracy so far: {session['correct']} / {attempted}")
 
 
 def render_pronunciation_studio() -> None:
@@ -1066,11 +1172,22 @@ def render_library() -> None:
     if st.button("Generate custom practice"):
         st.session_state.focus["topics"] = selected_topics
         st.session_state.focus["level"] = level
-        st.session_state.session["lesson_id"] = "custom"
-        st.session_state.session["exercises"] = make_exercises(
+        learn_session = st.session_state.sessions["learn"]
+        learn_session.update(default_session_state())
+        learn_session["lesson_id"] = "custom"
+        learn_session["exercises"] = make_exercises(
             lesson_id=LESSONS[0]["id"],
             difficulty=level,
-            variety=["multiple_choice", "fill_blank", "translate", "word_order", "listening"],
+            variety=[
+                "multiple_choice",
+                "fill_blank",
+                "translate",
+                "word_order",
+                "listening",
+                "listening_type",
+                "dialogue",
+                "cloze",
+            ],
             topics_override=selected_topics or LESSONS[0]["topics"],
         )
         persist_profile_state()
@@ -1089,12 +1206,25 @@ def render_settings() -> dict:
         "fill_blank",
         "translate",
         "listening",
+        "listening_type",
         "match",
+        "dialogue",
+        "cloze",
         "conversation",
         "word_order",
         "sentence_build",
     ]
-    default_options = ["multiple_choice", "fill_blank", "translate", "listening", "conversation", "word_order"]
+    default_options = [
+        "multiple_choice",
+        "fill_blank",
+        "translate",
+        "listening",
+        "listening_type",
+        "dialogue",
+        "cloze",
+        "conversation",
+        "word_order",
+    ]
     variety = st.multiselect("Choose exercise types", options, default=default_options)
     st.markdown("### Coaching Tips")
     st.info("Mix practice modes daily. Short, frequent sessions help retention.")
@@ -1117,17 +1247,20 @@ def main() -> None:
     tabs = st.tabs(["Learn", "Practice", "Progress", "Library", "Insights", "Downloads", "Settings"])
     with tabs[0]:
         st.markdown("### Choose a lesson")
-        selected = st.session_state.session.get("lesson_id")
+        learn_session = st.session_state.sessions["learn"]
+        selected = learn_session.get("lesson_id")
         selected = render_lesson_cards(selected)
         if selected:
-            st.session_state.session["lesson_id"] = selected
+            if selected != learn_session.get("lesson_id"):
+                learn_session.update(default_session_state())
+                learn_session["lesson_id"] = selected
         st.markdown("---")
-        if st.session_state.session.get("lesson_id"):
+        if learn_session.get("lesson_id"):
             settings = {
                 "difficulty": st.session_state.profile["level"],
                 "variety": st.session_state.get("variety", ["multiple_choice", "fill_blank", "translate"]),
             }
-            render_session(st.session_state.session["lesson_id"], settings, "learn")
+            render_session(learn_session["lesson_id"], settings, "learn")
     with tabs[1]:
         st.markdown("### Adaptive practice")
         settings = {
@@ -1135,8 +1268,10 @@ def main() -> None:
             "variety": st.session_state.get("variety", ["multiple_choice", "fill_blank", "translate"]),
         }
         if st.button("Start adaptive practice"):
-            st.session_state.session["lesson_id"] = LESSONS[0]["id"]
-            st.session_state.session["exercises"] = make_exercises(
+            practice_session = st.session_state.sessions["practice"]
+            practice_session.update(default_session_state())
+            practice_session["lesson_id"] = LESSONS[0]["id"]
+            practice_session["exercises"] = make_exercises(
                 lesson_id=LESSONS[0]["id"],
                 difficulty=settings["difficulty"],
                 variety=settings["variety"],
