@@ -474,6 +474,15 @@ def init_state() -> None:
             "learn": default_session_state(),
             "practice": default_session_state(),
         }
+        st.session_state.pop("session", None)
+    if "sessions" not in st.session_state:
+        st.session_state.sessions = {
+            "learn": default_session_state(),
+            "practice": default_session_state(),
+        }
+    st.session_state.sessions["learn"] = ensure_session_state(st.session_state.sessions.get("learn"))
+    st.session_state.sessions["practice"] = ensure_session_state(st.session_state.sessions.get("practice"))
+    st.session_state.session = st.session_state.sessions["learn"]
     if "variety" not in st.session_state:
         st.session_state.variety = [
             "multiple_choice",
@@ -526,7 +535,9 @@ def make_exercises(
     variety: list[str],
     topics_override: list[str] | None = None,
 ) -> list[Exercise]:
-    lesson = next(l for l in LESSONS if l["id"] == lesson_id)
+    lesson = next((l for l in LESSONS if l["id"] == lesson_id), None)
+    if not lesson:
+        return []
     topics = topics_override or lesson["topics"]
     vocab_pool = filter_vocab(topics, difficulty)
     sentence_pool = filter_sentences(topics, difficulty)
