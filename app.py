@@ -166,27 +166,6 @@ def set_theme() -> None:
             background-attachment: fixed;
             font-family: "Inter", "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif;
         }
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --primary: #ff8a7a;
-                --secondary: #7c6fff;
-                --mint: #38d1a8;
-                --ink: #e2e8f0;
-                --muted: #94a3b8;
-                --surface: rgba(15, 23, 42, 0.85);
-                --surface-strong: rgba(15, 23, 42, 0.95);
-                --border: rgba(148, 163, 184, 0.2);
-            }
-            .stApp {
-                background: linear-gradient(140deg, #0b1120 0%, #111827 45%, #0f172a 100%);
-            }
-            .floating-shape {
-                background: rgba(124, 111, 255, 0.22);
-            }
-            .progress-bar {
-                background: rgba(148, 163, 184, 0.25);
-            }
-        }
         h1, h2, h3, h4, h5, h6, p, span, div {
             color: var(--ink);
         }
@@ -274,6 +253,13 @@ def set_theme() -> None:
             border: 1px solid var(--border);
             box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
         }
+        .auth-card {
+            padding: 1.5rem;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+        }
         .progress-bar {
             height: 10px;
             border-radius: 999px;
@@ -300,29 +286,9 @@ def set_theme() -> None:
             border: 1px solid rgba(148, 163, 184, 0.5) !important;
             border-radius: 12px !important;
         }
-        @media (prefers-color-scheme: dark) {
-            .stTextInput input, .stTextArea textarea {
-                background-color: rgba(15, 23, 42, 0.85) !important;
-                border: 1px solid rgba(148, 163, 184, 0.35) !important;
-                color: var(--ink) !important;
-            }
-        }
         .stButton button {
             border-radius: 12px;
             font-weight: 600;
-            padding: 0.55rem 1rem;
-            background: linear-gradient(120deg, #111827, #1f2937);
-            color: #f8fafc;
-            border: none;
-            box-shadow: 0 12px 22px rgba(15, 23, 42, 0.18);
-        }
-        .stButton button:hover {
-            background: linear-gradient(120deg, #111827, #334155);
-            color: #ffffff;
-        }
-        .stButton button:focus-visible {
-            outline: 3px solid rgba(99, 102, 241, 0.5);
-            outline-offset: 2px;
         }
         </style>
         """,
@@ -437,36 +403,6 @@ def authenticate(email: str, password: str) -> tuple[bool, str]:
     if account["password"] != hash_password(password):
         return False, "Incorrect password."
     return True, "Welcome back!"
-
-
-def request_password_reset(email: str) -> tuple[bool, str, str | None]:
-    profiles = load_profiles()
-    account = profiles.get(email)
-    if not account:
-        return False, "We couldn't find that account.", None
-    reset_code = f"{random.randint(100000, 999999)}"
-    account["reset_code"] = reset_code
-    account["reset_requested_at"] = datetime.now().isoformat()
-    profiles[email] = account
-    save_profiles(profiles)
-    return True, "Reset code generated. Use it below to set a new password.", reset_code
-
-
-def reset_password(email: str, reset_code: str, new_password: str) -> tuple[bool, str]:
-    profiles = load_profiles()
-    account = profiles.get(email)
-    if not account:
-        return False, "We couldn't find that account."
-    if not reset_code or reset_code != account.get("reset_code"):
-        return False, "Invalid reset code."
-    if not new_password:
-        return False, "Please enter a new password."
-    account["password"] = hash_password(new_password)
-    account["reset_code"] = None
-    account["reset_requested_at"] = None
-    profiles[email] = account
-    save_profiles(profiles)
-    return True, "Password updated. You can now log in."
 
 
 def init_state() -> None:
@@ -720,21 +656,20 @@ def render_auth_panel() -> None:
             profile = st.session_state.profile
             st.subheader(f"Welcome back, {profile['name'] or 'Learner'}")
             st.caption(f"Signed in as {st.session_state.auth['email']}")
-            with st.expander("Account settings", expanded=False):
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("Save progress"):
-                        persist_profile_state()
-                        st.success("Progress saved.")
-                with col2:
-                    if st.button("Sign out"):
-                        persist_profile_state()
-                        st.session_state.auth = {"email": "", "logged_in": False}
-                        apply_profile_state(default_profile_state())
-                        st.success("Signed out.")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Save progress"):
+                    persist_profile_state()
+                    st.success("Progress saved.")
+            with col2:
+                if st.button("Sign out"):
+                    persist_profile_state()
+                    st.session_state.auth = {"email": "", "logged_in": False}
+                    apply_profile_state(default_profile_state())
+                    st.success("Signed out.")
         else:
             st.subheader("Create a profile or log in")
-            tab_create, tab_login, tab_reset = st.tabs(["Create profile", "Log in", "Reset password"])
+            tab_create, tab_login = st.tabs(["Create profile", "Log in"])
             with tab_create:
                 with st.form("create-profile"):
                     name = st.text_input("Name", placeholder="Your name")
@@ -761,30 +696,6 @@ def render_auth_panel() -> None:
                         profiles = load_profiles()
                         st.session_state.auth = {"email": email, "logged_in": True}
                         apply_profile_state(profiles[email]["state"])
-                        st.success(message)
-                    else:
-                        st.error(message)
-            with tab_reset:
-                st.caption("Request a reset code, then set a new password.")
-                with st.form("request-reset"):
-                    email = st.text_input("Email", key="reset-email")
-                    requested = st.form_submit_button("Send reset code")
-                if requested:
-                    success, message, code = request_password_reset(email)
-                    if success:
-                        st.success(message)
-                        st.info(f"Reset code (demo): {code}")
-                        st.caption("In production, this would be emailed to you.")
-                    else:
-                        st.error(message)
-                with st.form("confirm-reset"):
-                    email = st.text_input("Email", key="reset-confirm-email")
-                    reset_code = st.text_input("Reset code", key="reset-code")
-                    new_password = st.text_input("New password", type="password", key="reset-new-password")
-                    confirmed = st.form_submit_button("Update password")
-                if confirmed:
-                    success, message = reset_password(email, reset_code, new_password)
-                    if success:
                         st.success(message)
                     else:
                         st.error(message)
