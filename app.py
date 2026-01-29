@@ -188,6 +188,17 @@ COLLOCATION_SETS = [
         "native": "alto",
         "rewrite": "El proyecto exige un alto nivel de compromiso.",
     },
+]
+
+PORTFOLIO_AXES = [
+    "Lexical sophistication",
+    "Collocation accuracy",
+    "Pragmatic appropriateness",
+    "Prosody",
+    "Cohesion",
+]
+
+ADAPTIVE_QUESTION_BANK = [
     {
         "pair": "me da la impresión de que",
         "type": "fixed phrase",
@@ -423,6 +434,9 @@ def set_theme() -> None:
         .stTabs [data-baseweb="tab"] {
             font-weight: 600;
         }
+        section[data-testid="stSidebar"] .stButton button:hover {
+            border-color: rgba(56, 189, 248, 0.6);
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -502,6 +516,9 @@ def render_profile_sidebar() -> None:
     st.sidebar.markdown("---")
     st.sidebar.subheader("Navigation")
 
+    if not assessment["active"]:
+        st.info("Start the assessment to begin adaptive questions.")
+        return
 
 def render_gap_finder() -> None:
     st.header("1. Real-time gap-finder diagnostics")
