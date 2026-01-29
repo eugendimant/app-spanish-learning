@@ -724,7 +724,7 @@ def render_lesson_cards(selected_id: str | None) -> str:
     return selection
 
 
-def render_match_exercise(exercise: Exercise) -> str:
+def render_match_exercise(exercise: Exercise, key_prefix: str) -> str:
     pairs = exercise.extra["pairs"]
     st.write("Connect each Spanish word with its meaning:")
     left = list(pairs.keys())
@@ -734,16 +734,16 @@ def render_match_exercise(exercise: Exercise) -> str:
         selection = st.selectbox(
             f"{word}",
             options=right,
-            key=f"match-{st.session_state.session['index']}-{word}",
+            key=f"{key_prefix}-match-{st.session_state.session['index']}-{word}",
         )
         selections.append(f"{word}:{selection}")
     return ";".join(selections)
 
 
-def render_word_order(exercise: Exercise) -> str:
+def render_word_order(exercise: Exercise, key_prefix: str) -> str:
     st.write("Tap the words in order (type them in the box):")
     st.caption("Words: " + ", ".join(exercise.extra["words"]))
-    return st.text_input("Your sentence", key=f"word-order-{st.session_state.session['index']}")
+    return st.text_input("Your sentence", key=f"{key_prefix}-word-order-{st.session_state.session['index']}")
 
 
 def render_sentence_build(exercise: Exercise) -> str:
@@ -784,11 +784,15 @@ def render_exercise(exercise: Exercise) -> str:
     st.subheader(exercise.prompt)
     response = ""
     if exercise.kind == "multiple_choice" or exercise.kind == "conversation":
-        response = st.radio("Pick one", exercise.options, key=f"mc-{st.session_state.session['index']}")
+        response = st.radio(
+            "Pick one",
+            exercise.options,
+            key=f"{key_prefix}-mc-{st.session_state.session['index']}",
+        )
     elif exercise.kind in {"fill_blank", "translate"}:
-        response = st.text_input("Your answer", key=f"text-{st.session_state.session['index']}")
+        response = st.text_input("Your answer", key=f"{key_prefix}-text-{st.session_state.session['index']}")
     elif exercise.kind == "match":
-        response = render_match_exercise(exercise)
+        response = render_match_exercise(exercise, key_prefix)
     elif exercise.kind == "word_order":
         response = render_word_order(exercise)
     elif exercise.kind == "sentence_build":
@@ -799,7 +803,7 @@ def render_exercise(exercise: Exercise) -> str:
     return response
 
 
-def render_session(selected_lesson: str, settings: dict) -> None:
+def render_session(selected_lesson: str, settings: dict, session_label: str) -> None:
     session = st.session_state.session
     if selected_lesson == "custom" and session["exercises"]:
         pass
@@ -840,12 +844,13 @@ def render_session(selected_lesson: str, settings: dict) -> None:
         return
 
     exercise = session["exercises"][index]
-    response = render_exercise(exercise)
+    key_prefix = f"{session_label}-{selected_lesson}"
+    response = render_exercise(exercise, key_prefix)
     st.write("")
 
     col1, col2 = st.columns([1, 1])
     with col1:
-        if st.button("Check", key="check-answer"):
+        if st.button("Check", key=f"{key_prefix}-check-answer"):
             correct, feedback = check_answer(exercise, response)
             session["answered"] = True
             session["feedback"] = feedback
@@ -856,7 +861,7 @@ def render_session(selected_lesson: str, settings: dict) -> None:
             update_mastery(exercise, correct)
             persist_profile_state()
     with col2:
-        if st.button("Next", key="next-question"):
+        if st.button("Next", key=f"{key_prefix}-next-question"):
             if session["answered"]:
                 session["index"] += 1
                 session["answered"] = False
@@ -1042,7 +1047,7 @@ def main() -> None:
                 "difficulty": st.session_state.profile["level"],
                 "variety": st.session_state.get("variety", ["multiple_choice", "fill_blank", "translate"]),
             }
-            render_session(st.session_state.session["lesson_id"], settings)
+            render_session(st.session_state.session["lesson_id"], settings, "learn")
     with tabs[1]:
         st.markdown("### Adaptive practice")
         settings = {
