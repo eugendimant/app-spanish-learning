@@ -186,20 +186,27 @@ def process_user_message(message: str):
     """Process user's conversation message."""
     scenario = st.session_state.conv_scenario
 
-    # Check for mistakes
-    mistakes = check_text_for_mistakes(message)
+    # Check for mistakes with error handling
     corrections = []
+    try:
+        mistakes = check_text_for_mistakes(message)
+        for mistake in mistakes[:2]:  # Show max 2 corrections
+            if mistake.get("tag") != "language":  # Skip language warnings in corrections
+                corrections.append(f"{mistake['original']} → {mistake['correction']}")
+    except Exception:
+        mistakes = []  # Gracefully handle errors in mistake checking
 
-    for mistake in mistakes[:2]:  # Show max 2 corrections
-        corrections.append(f"{mistake['original']} → {mistake['correction']}")
-
-    # Check hidden targets
+    # Check hidden targets with error handling
     targets = scenario.get("hidden_targets", [])
-    constraint_results = analyze_constraints(message, targets)
+    try:
+        constraint_results = analyze_constraints(message, targets)
 
-    for i, (target, result) in enumerate(constraint_results.items()):
-        if result.get("met") and len(st.session_state.conv_targets_achieved) <= i:
-            st.session_state.conv_targets_achieved.append(True)
+        # Track achieved targets by name (not index) to properly record which ones were met
+        for target, result in constraint_results.items():
+            if result.get("met") and target not in st.session_state.conv_targets_achieved:
+                st.session_state.conv_targets_achieved.append(target)
+    except Exception:
+        constraint_results = {}  # Gracefully handle errors in constraint analysis
 
     # Add user message
     st.session_state.conv_messages.append({

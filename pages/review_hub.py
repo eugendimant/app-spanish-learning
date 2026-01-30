@@ -271,7 +271,19 @@ def render_error_card(card: dict):
         correct = card.get("back", "")
         item = card["item"]
 
-        if user_answer.lower().strip() in correct.lower():
+        # Normalize both answers for comparison
+        user_normalized = user_answer.lower().strip()
+        correct_normalized = correct.lower().strip()
+
+        # Check for exact match or close enough match (user answer should match the full correction)
+        # Use equality check instead of substring to avoid false positives like "de" matching "depender de"
+        is_correct = (
+            user_normalized == correct_normalized or
+            user_normalized == correct_normalized.replace("→", "").strip() or
+            correct_normalized.startswith(user_normalized + " ") is False and user_normalized == correct_normalized.split("/")[0].strip()
+        )
+
+        if is_correct:
             st.markdown("""
             <div class="feedback-box feedback-success">
                 ✅ <strong>Correct!</strong>
