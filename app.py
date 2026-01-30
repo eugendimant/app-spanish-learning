@@ -343,12 +343,133 @@ LISTENING_SCENARIOS = [
     },
 ]
 
-PORTFOLIO_AXES = [
-    "Lexical sophistication",
-    "Collocation accuracy",
-    "Pragmatic appropriateness",
-    "Prosody",
-    "Cohesion",
+WEEKLY_MISSIONS = [
+    {
+        "week": "Week 1",
+        "title": "Secure a rental apartment",
+        "brief": "Convince a landlord you are reliable, negotiate utilities, and clarify lease clauses.",
+        "stakes": "Landlord skeptical due to high demand.",
+        "skills": ["politeness", "hedging", "formal register", "negotiation"],
+        "constraints": [
+            "Use usted + formal greetings.",
+            "Include 2 hedging phrases.",
+            "Ask for clarification on a clause.",
+        ],
+    },
+    {
+        "week": "Week 2",
+        "title": "Negotiate a contract clause",
+        "brief": "You must push back on liability while preserving the partnership.",
+        "stakes": "Legal counsel is firm on indemnity language.",
+        "skills": ["diplomacy", "persuasion", "connector control", "tone"],
+        "constraints": [
+            "Offer a compromise with conditional language.",
+            "Use 2 contrastive connectors.",
+            "Avoid direct blame.",
+        ],
+    },
+    {
+        "week": "Week 3",
+        "title": "Defend a thesis point",
+        "brief": "Respond to committee doubts with evidence and respectful firmness.",
+        "stakes": "Defense panel challenges your methodology.",
+        "skills": ["academic register", "certainty control", "stance"],
+        "constraints": [
+            "Use 2 evidential markers.",
+            "Use one concession + rebuttal.",
+            "Stay in academic register.",
+        ],
+    },
+    {
+        "week": "Week 4",
+        "title": "Handle a customer escalation",
+        "brief": "De-escalate a frustrated client and negotiate a timeline reset.",
+        "stakes": "Client threatens to cancel.",
+        "skills": ["empathy", "de-escalation", "clarity", "solution framing"],
+        "constraints": [
+            "Acknowledge emotion explicitly.",
+            "Offer 2 concrete next steps.",
+            "Use softeners to reduce friction.",
+        ],
+    },
+]
+
+INPUT_LIBRARY = [
+    {
+        "title": "Investigative podcast: housing market crisis",
+        "type": "Podcast",
+        "level": "C1",
+        "tags": ["persuasion", "interruptions", "technical vocabulary", "economics"],
+    },
+    {
+        "title": "Debate: AI policy in higher education",
+        "type": "Debate",
+        "level": "C2",
+        "tags": ["stance", "irony", "connectors", "academic register"],
+    },
+    {
+        "title": "Court snippet: contract liability dispute",
+        "type": "Court audio",
+        "level": "C2",
+        "tags": ["formal register", "precision", "hedging", "legal vocabulary"],
+    },
+    {
+        "title": "Street interview: rent negotiations",
+        "type": "Interview",
+        "level": "C1",
+        "tags": ["slang", "politeness", "interruptions", "negotiation"],
+    },
+    {
+        "title": "Op-ed: customer service under pressure",
+        "type": "Op-ed",
+        "level": "C1",
+        "tags": ["tone", "politeness", "blame control", "connectors"],
+    },
+    {
+        "title": "Stand-up set: workplace miscommunication",
+        "type": "Stand-up",
+        "level": "C1",
+        "tags": ["irony", "stance", "slang", "timing"],
+    },
+]
+
+RELATIONSHIP_PERSONAS = [
+    {
+        "name": "María (Landlord)",
+        "role": "Landlord",
+        "relationship": "Cautiously open, wants reassurance about stability.",
+        "tendencies": ["formal register", "expects concise answers", "likes polite hedging"],
+    },
+    {
+        "name": "Sergio (Boss)",
+        "role": "Boss",
+        "relationship": "Direct, time-constrained, expects solutions.",
+        "tendencies": ["prefers decisive tone", "low tolerance for vagueness"],
+    },
+    {
+        "name": "Lucía (Colleague)",
+        "role": "Colleague",
+        "relationship": "Collaborative, values soft disagreement.",
+        "tendencies": ["prefers inclusive language", "sensitive to bluntness"],
+    },
+]
+
+LIVE_MODE_SCENARIOS = [
+    {
+        "title": "Overlapping stand-up update",
+        "prompt": "Your teammate interrupts twice while you defend a timeline.",
+        "focus": ["turn-taking", "speed", "assertiveness"],
+    },
+    {
+        "title": "Angry customer call",
+        "prompt": "Customer complains loudly while you propose a fix.",
+        "focus": ["de-escalation", "empathy", "clarity"],
+    },
+    {
+        "title": "Academic Q&A",
+        "prompt": "Panel interrupts with rapid-fire follow-up questions.",
+        "focus": ["certainty control", "evidence", "register"],
+    },
 ]
 
 
@@ -438,9 +559,6 @@ def set_theme() -> None:
         section[data-testid="stSidebar"] .stButton button:hover {
             border-color: rgba(56, 189, 248, 0.6);
         }
-        section[data-testid="stSidebar"] .stButton button:hover {
-            border-color: rgba(56, 189, 248, 0.6);
-        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -455,12 +573,26 @@ def init_state() -> None:
             "weekly_goal": 6,
             "last_gap_week": None,
         }
+    if "assessment" not in st.session_state:
+        st.session_state.assessment = {
+            "active": False,
+            "last_completed": None,
+        }
     if "gap_results" not in st.session_state:
         st.session_state.gap_results = []
+    if "adaptive_focus" not in st.session_state:
+        st.session_state.adaptive_focus = []
     if "portfolio" not in st.session_state:
         st.session_state.portfolio = load_portfolio()
     if "writing_analysis" not in st.session_state:
         st.session_state.writing_analysis = {"draft": "", "edits": []}
+    if "relationship_memory" not in st.session_state:
+        st.session_state.relationship_memory = {
+            persona["name"]: {"notes": [], "tendencies": persona["tendencies"]}
+            for persona in RELATIONSHIP_PERSONAS
+        }
+    if "live_mode" not in st.session_state:
+        st.session_state.live_mode = {"last_speed": 1.0, "last_complexity": 1.0}
 
 
 def load_portfolio() -> dict:
@@ -493,6 +625,11 @@ def generate_gap_results(scores: dict[str, int]) -> list[DiagnosticIssue]:
     return ranked[:20]
 
 
+def derive_adaptive_focus(scores: dict[str, int]) -> list[str]:
+    focus = [area for area, score in scores.items() if score <= 3]
+    return focus or ["Nuance & pragmatics", "Register & tone"]
+
+
 def render_hero() -> None:
     st.markdown(
         """
@@ -510,26 +647,26 @@ def render_hero() -> None:
         unsafe_allow_html=True,
     )
 
-    thesis = st.text_input("Thesis")
-    counter = st.text_input("Counterargument")
-    concession = st.text_input("Concession")
-    conclusion = st.text_input("Conclusion")
-
 def render_profile_sidebar() -> None:
     st.sidebar.header("Learner Profile")
     profile = st.session_state.profile
+    assessment = st.session_state.assessment
     profile["name"] = st.sidebar.text_input("Name", value=profile["name"], placeholder="Your name")
     profile["level"] = st.sidebar.selectbox("Target level", ["C1", "C2"], index=0)
     profile["weekly_goal"] = st.sidebar.slider("Weekly sessions", 2, 10, profile["weekly_goal"])
+    assessment["active"] = st.sidebar.toggle("Activate adaptive mode", value=assessment["active"])
+    if assessment["active"]:
+        st.sidebar.success("Adaptive mode is on.")
+    else:
+        st.sidebar.info("Turn on adaptive mode to unlock weekly missions.")
     st.sidebar.markdown("---")
     st.sidebar.subheader("Navigation")
 
     if not assessment["active"]:
-        st.info("Start the assessment to begin adaptive questions.")
-        return
+        st.sidebar.caption("Complete the activation to enable personalized missions.")
 
 def render_gap_finder() -> None:
-    st.header("1. Real-time gap-finder diagnostics")
+    st.header("Real-time gap-finder diagnostics")
     st.write("Weekly adaptive tests targeting collocations, prepositions, discourse markers, register, and nuance.")
 
     col1, col2 = st.columns([1.2, 1])
@@ -548,6 +685,7 @@ def render_gap_finder() -> None:
         random.seed(seed_for_week(week, st.session_state.profile["name"]))
         st.session_state.gap_results = generate_gap_results(scores)
         st.session_state.profile["last_gap_week"] = week.isoformat()
+        st.session_state.adaptive_focus = derive_adaptive_focus(scores)
 
     if st.session_state.gap_results:
         st.subheader("Error Top 20")
@@ -594,7 +732,7 @@ def score_register_response(text: str, style: str) -> dict[str, int]:
 
 
 def render_register_simulator() -> None:
-    st.header("2. Register & tone mastery simulator")
+    st.header("Register & tone mastery simulator")
     prompt = st.text_area(
         "Scenario prompt",
         value="You need to convince a skeptical team to adopt a new workflow.",
@@ -620,14 +758,8 @@ def render_register_simulator() -> None:
             "- *Audience fit*: match lexical density and formality to register."
         )
 
-def render_listening_nuance() -> None:
-    st.header("Listening for nuance: fast, messy, real")
-    scenario_title = st.selectbox("Choose a scenario", [s["title"] for s in LISTENING_SCENARIOS])
-    scenario = next(s for s in LISTENING_SCENARIOS if s["title"] == scenario_title)
-    st.write(scenario["audio"])
-
 def render_pronunciation_coach() -> None:
-    st.header("3. High-precision pronunciation & prosody coach")
+    st.header("High-precision pronunciation & prosody coach")
     target = st.selectbox("Shadowing prompt", [item["phrase"] for item in PRONUNCIATION_TARGETS])
     details = next(item for item in PRONUNCIATION_TARGETS if item["phrase"] == target)
     st.markdown("**Focus areas:** " + ", ".join(details["focus"]))
@@ -685,7 +817,7 @@ def render_pronunciation_coach() -> None:
 
 
 def render_collocation_engine() -> None:
-    st.header("4. Native-corpus collocation engine")
+    st.header("Native-corpus collocation engine")
     tabs = st.tabs(["Choose-the-more-native", "Rewrite to sound native", "Collocation completion"])
 
     with tabs[0]:
@@ -713,6 +845,182 @@ def render_collocation_engine() -> None:
             st.caption(f"Full example: {item['rewrite']}")
 
 
+def render_mission_control() -> None:
+    st.header("Weekly mission control")
+    st.write("Every week you enter a real-world mission that adapts to your slips.")
+
+    if not st.session_state.assessment["active"]:
+        st.info("Activate adaptive mode in the sidebar to unlock mission constraints.")
+        return
+
+    mission = st.selectbox("Choose your weekly mission", WEEKLY_MISSIONS, format_func=lambda m: f"{m['week']}: {m['title']}")
+    st.markdown(f"**Brief:** {mission['brief']}")
+    st.markdown(f"**Stakes:** {mission['stakes']}")
+    st.markdown("**Core skills:** " + ", ".join(mission["skills"]))
+
+    adaptive_constraints = {
+        "Collocations": "Use 2 precise collocations from your gap list.",
+        "Prepositions": "Avoid preposition mismatches (de/en/por/para).",
+        "Discourse markers": "Use at least 3 discourse connectors.",
+        "Register & tone": "Maintain consistent register for the whole response.",
+        "Nuance & pragmatics": "Include softeners and avoid unintended blame.",
+    }
+    focus = st.session_state.adaptive_focus or ["Nuance & pragmatics"]
+    st.markdown("**Adaptive constraints (tighten where you slipped)**")
+    for area in focus:
+        st.markdown(f"- {adaptive_constraints.get(area, 'Maintain clarity and precision.')}")
+
+    st.markdown("**Mission constraints**")
+    for constraint in mission["constraints"]:
+        st.markdown(f"- {constraint}")
+
+    st.text_area("Draft your mission response", height=180, key="mission-response")
+    st.caption("Your mission response will be evaluated for register, hedging, and connector control.")
+
+
+def render_adaptive_input_selection() -> None:
+    st.header("Adaptive input selection")
+    st.write("Authentic inputs are chosen based on your errors, not generic lessons.")
+
+    tag_pool = sorted({tag for item in INPUT_LIBRARY for tag in item["tags"]})
+    default_tags = []
+    if st.session_state.adaptive_focus:
+        focus_to_tags = {
+            "Register & tone": ["formal register", "tone"],
+            "Nuance & pragmatics": ["stance", "politeness", "blame control"],
+            "Discourse markers": ["connectors"],
+            "Collocations": ["technical vocabulary"],
+            "Prepositions": ["precision"],
+        }
+        for focus in st.session_state.adaptive_focus:
+            default_tags += focus_to_tags.get(focus, [])
+    selected_tags = st.multiselect("Skills to target", tag_pool, default=list(dict.fromkeys(default_tags)))
+    target_level = st.selectbox("Target input level", ["C1", "C2"])
+
+    filtered = []
+    for item in INPUT_LIBRARY:
+        if item["level"] != target_level:
+            continue
+        overlap = len(set(item["tags"]) & set(selected_tags))
+        filtered.append((overlap, item))
+    filtered.sort(key=lambda x: x[0], reverse=True)
+
+    st.markdown("**Recommended inputs at your edge**")
+    for overlap, item in filtered:
+        st.markdown(
+            f"""
+            <div class="card" style="margin-bottom:12px;">
+                <h4>{item['title']}</h4>
+                <p><strong>Type:</strong> {item['type']} • <strong>Level:</strong> {item['level']}</p>
+                <p><strong>Skills:</strong> {", ".join(item["tags"])}</p>
+                <p><strong>Match score:</strong> {overlap} skill tags</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def render_nuance_feedback() -> None:
+    st.header("Nuance-first feedback lab")
+    st.write("Compare what you intended to imply vs what you actually implied.")
+
+    intent = st.text_area("Intended meaning", height=90, key="nuance-intent")
+    message = st.text_area("Your message", height=120, key="nuance-message")
+    stance = st.selectbox(
+        "Target stance",
+        ["Diplomatic", "Firm", "Skeptical", "Enthusiastic", "Neutral"],
+    )
+
+    if st.button("Analyze nuance"):
+        lowered = message.lower()
+        polite_markers = sum(marker in lowered for marker in REGISTER_MARKERS["politeness"])
+        hedging_markers = sum(marker in lowered for marker in REGISTER_MARKERS["hedging"])
+        blame_markers = sum(word in lowered for word in ["culpa", "fallo", "responsable"])
+        certainty = "high" if "sin duda" in lowered or "claramente" in lowered else "medium"
+        tone = "soft" if hedging_markers else "direct"
+
+        st.subheader("Implication profile")
+        st.write(
+            [
+                {"Signal": "Politeness", "Level": "high" if polite_markers else "low"},
+                {"Signal": "Hedging", "Level": "present" if hedging_markers else "absent"},
+                {"Signal": "Certainty", "Level": certainty},
+                {"Signal": "Blame risk", "Level": "elevated" if blame_markers else "low"},
+                {"Signal": "Emotional tone", "Level": tone},
+            ]
+        )
+
+        st.markdown("**Mismatch check**")
+        if intent and message and intent.lower() not in message.lower():
+            st.warning("Your message may not reflect the intended meaning. Add explicit stance markers.")
+        else:
+            st.success("Message aligns with your intended meaning.")
+
+    st.markdown("**Rephrase drill**")
+    drill = st.selectbox(
+        "Rephrase the same message as:",
+        ["Softer", "Firmer", "More diplomatic", "More skeptical", "More enthusiastic", "More neutral"],
+    )
+    st.text_area("Rewrite here", height=120, key=f"nuance-drill-{drill}")
+    st.caption(f"Target stance: {stance} • Drill mode: {drill}")
+
+
+def render_relationship_memory() -> None:
+    st.header("Relationship & persona memory")
+    st.write("Stay consistent with personas across weeks and adapt to your tendencies.")
+
+    persona_name = st.selectbox("Choose a partner", [p["name"] for p in RELATIONSHIP_PERSONAS])
+    persona = next(p for p in RELATIONSHIP_PERSONAS if p["name"] == persona_name)
+    memory = st.session_state.relationship_memory[persona_name]
+
+    st.markdown(f"**Role:** {persona['role']}")
+    st.markdown(f"**Relationship status:** {persona['relationship']}")
+    st.markdown("**Known tendencies**")
+    st.write(memory["tendencies"])
+
+    note = st.text_area("Log a new interaction note", height=100)
+    tendency_flags = st.multiselect(
+        "Observed tendencies in your speech",
+        ["too direct", "too formal", "over-hedging", "weak turn-taking", "awkward closings"],
+    )
+    if st.button("Save interaction"):
+        if note.strip():
+            memory["notes"].append(
+                {"date": date.today().isoformat(), "note": note, "flags": tendency_flags}
+            )
+            st.success("Saved. Your future missions will reflect this relationship history.")
+        else:
+            st.info("Add a note to save the interaction.")
+
+    if memory["notes"]:
+        st.subheader("Relationship history")
+        st.dataframe(memory["notes"], use_container_width=True)
+
+
+def render_live_mode() -> None:
+    st.header("Live mode: speed + messiness mastery")
+    st.write("Real-time pace with overlaps, fillers, and timed responses.")
+
+    scenario = st.selectbox("Scenario", [s["title"] for s in LIVE_MODE_SCENARIOS])
+    selected = next(s for s in LIVE_MODE_SCENARIOS if s["title"] == scenario)
+    st.markdown(f"**Prompt:** {selected['prompt']}")
+    st.markdown("**Focus:** " + ", ".join(selected["focus"]))
+
+    speed = st.slider("Audio speed multiplier", 0.8, 1.6, 1.0, 0.1)
+    complexity = st.slider("Content complexity", 1, 5, 3)
+    response_time = st.slider("Response time (seconds)", 10, 60, 25)
+
+    if st.button("Start live drill"):
+        st.session_state.live_mode["last_speed"] = speed
+        st.session_state.live_mode["last_complexity"] = complexity
+        st.info(
+            f"Play the audio at {speed}× speed. Respond within {response_time}s. "
+            f"Keep {complexity}/5 complexity."
+        )
+        st.progress(0.0, text="Timer ready — respond aloud, then debrief.")
+    st.caption("Adaptive pacing: raise speed before complexity if time pressure is the issue.")
+
+
 def analyze_constraints(response: str, constraints: list[str]) -> dict[str, bool]:
     lowered = response.lower()
     results = {}
@@ -737,7 +1045,7 @@ def analyze_constraints(response: str, constraints: list[str]) -> dict[str, bool
 
 
 def render_conversation_lab() -> None:
-    st.header("5. Advanced conversation lab with constraints")
+    st.header("Advanced conversation lab with constraints")
     scenario = st.selectbox("Choose a roleplay", [s["title"] for s in CONVERSATION_SCENARIOS])
     selected = next(s for s in CONVERSATION_SCENARIOS if s["title"] == scenario)
 
@@ -785,7 +1093,7 @@ def generate_edit_trail(text: str) -> list[dict]:
 
 
 def render_writing_studio() -> None:
-    st.header("6. Error-aware writing studio with edit trails")
+    st.header("Error-aware writing studio with edit trails")
     st.write("Write 300–1000 words and receive line edits with reasoning categories.")
     draft = st.text_area("Your draft", height=220, key="writing-draft")
 
@@ -847,7 +1155,7 @@ def render_writing_studio() -> None:
 
 
 def render_argumentation_drills() -> None:
-    st.header("7. Argumentation & rhetoric drills")
+    st.header("Argumentation & rhetoric drills")
     topic = st.selectbox("Choose a topic", ARGUMENTATION_TOPICS)
     st.write("Build a thesis, counterargument, concession, and conclusion using discourse connectors.")
 
@@ -868,7 +1176,7 @@ def render_argumentation_drills() -> None:
 
 
 def render_dialect_tuning() -> None:
-    st.header("8. Dialect & regional Spanish tuning")
+    st.header("Dialect & regional Spanish tuning")
     dialect = st.selectbox("Select region", list(DIALECT_MODULES.keys()))
     data = DIALECT_MODULES[dialect]
 
@@ -905,7 +1213,7 @@ def render_dialect_tuning() -> None:
 
 
 def render_listening_nuance() -> None:
-    st.header("9. Listening for nuance: fast, messy, real")
+    st.header("Listening for nuance: fast, messy, real")
     scenario_title = st.selectbox("Choose a scenario", [s["title"] for s in LISTENING_SCENARIOS])
     scenario = next(s for s in LISTENING_SCENARIOS if s["title"] == scenario_title)
     st.write(scenario["audio"])
@@ -933,7 +1241,7 @@ def render_listening_nuance() -> None:
 
 
 def render_portfolio() -> None:
-    st.header("10. Native-likeness benchmark & portfolio")
+    st.header("Native-likeness benchmark & portfolio")
     st.write("Track progress across measurable axes and export your evidence.")
 
     axis_scores = {}
@@ -980,20 +1288,28 @@ def render_overview() -> None:
         """
         <div class="metric-grid">
             <div class="card">
+                <h3>Weekly Mission Control</h3>
+                <p>Real-life missions that tighten constraints where you slip and expand only after consistency.</p>
+            </div>
+            <div class="card">
+                <h3>Adaptive Input Selection</h3>
+                <p>Authentic content tagged by skills, auto-picked from your error patterns.</p>
+            </div>
+            <div class="card">
                 <h3>Weekly Gap Finder</h3>
                 <p>Adaptive C1–C2 diagnostics with ranked Error Top 20 and targeted training plan.</p>
             </div>
             <div class="card">
-                <h3>Register Simulator</h3>
-                <p>One prompt, five registers. Score politeness, hedging, directness, idiomaticity.</p>
+                <h3>Nuance Feedback Lab</h3>
+                <p>Meaning vs implication feedback with rephrase drills for tone control.</p>
             </div>
             <div class="card">
                 <h3>Prosody Coach</h3>
                 <p>Shadowing with waveform + pitch tracks and looped playback.</p>
             </div>
             <div class="card">
-                <h3>Native Collocation Engine</h3>
-                <p>Verb-noun pairs, fixed phrases, and corpus-based frames.</p>
+                <h3>Relationship Memory</h3>
+                <p>Track persona history, adjust to tendencies, stay consistent across weeks.</p>
             </div>
         </div>
         """,
@@ -1013,6 +1329,11 @@ def main() -> None:
         "Go to",
         [
             "Overview",
+            "Weekly Mission",
+            "Adaptive Inputs",
+            "Nuance Feedback",
+            "Relationship Memory",
+            "Live Mode",
             "Gap Finder",
             "Register Simulator",
             "Prosody Coach",
@@ -1028,6 +1349,16 @@ def main() -> None:
 
     if nav == "Overview":
         render_overview()
+    elif nav == "Weekly Mission":
+        render_mission_control()
+    elif nav == "Adaptive Inputs":
+        render_adaptive_input_selection()
+    elif nav == "Nuance Feedback":
+        render_nuance_feedback()
+    elif nav == "Relationship Memory":
+        render_relationship_memory()
+    elif nav == "Live Mode":
+        render_live_mode()
     elif nav == "Gap Finder":
         render_gap_finder()
     elif nav == "Register Simulator":
