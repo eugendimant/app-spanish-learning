@@ -290,13 +290,13 @@ def init_profile_domains(profile_id: int) -> None:
                     UNIQUE(profile_id, domain)
                 )
             """)
-            # Insert domains one by one to avoid executemany issues
+            # Insert domains one by one
             for domain in domains:
                 conn.execute("""
                     INSERT OR IGNORE INTO domain_exposure
                     (profile_id, domain, exposure_count, total_items, mastered_items)
-                    VALUES (?, ?, 0, 0, 0)
-                """, (profile_id, domain))
+                    VALUES (?, ?, ?, ?, ?)
+                """, (profile_id, domain, 0, 0, 0))
             conn.commit()
     except Exception as e:
         # Log error but don't crash - domains can be initialized later
@@ -317,22 +317,30 @@ def get_all_profiles() -> list:
         return []
 
 
-def create_profile(name: str, level: str = "C1") -> int:
+def create_profile(name: str, level: str = "C1") -> Optional[int]:
     """Create a new profile and return its ID."""
     profile_id = None
-    with get_connection() as conn:
-        cursor = conn.execute("""
-            INSERT INTO profiles (name, level, is_active, created_at, updated_at)
-            VALUES (?, ?, 0, ?, ?)
-        """, (name, level, datetime.now().isoformat(), datetime.now().isoformat()))
-        conn.commit()
-        profile_id = cursor.lastrowid
+    try:
+        with get_connection() as conn:
+            cursor = conn.execute("""
+                INSERT INTO profiles (name, level, is_active, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?)
+            """, (name, level, 0, datetime.now().isoformat(), datetime.now().isoformat()))
+            conn.commit()
+            profile_id = cursor.lastrowid
 
-    # Initialize domains for this profile (with error handling)
-    if profile_id is not None:
-        init_profile_domains(profile_id)
+        # Initialize domains for this profile (with error handling)
+        if profile_id is not None:
+            try:
+                init_profile_domains(profile_id)
+            except Exception as e:
+                print(f"Warning: Could not initialize domains for profile {profile_id}: {e}")
+                # Don't fail profile creation if domains can't be initialized
 
-    return profile_id
+        return profile_id
+    except Exception as e:
+        print(f"Error creating profile: {e}")
+        return None
 
 
 def get_profile(profile_id: int) -> Optional[dict]:
