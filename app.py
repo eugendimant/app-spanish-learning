@@ -2,8 +2,11 @@ import difflib
 import hashlib
 import json
 import random
+import sqlite3
+from csv import DictWriter
 from dataclasses import dataclass
 from datetime import date
+from io import StringIO
 from pathlib import Path
 
 import streamlit as st
@@ -12,6 +15,7 @@ import streamlit.components.v1 as components
 
 DATA_DIR = Path("data")
 PORTFOLIO_PATH = DATA_DIR / "portfolio.json"
+DB_PATH = DATA_DIR / "vivalingo.db"
 
 
 @dataclass(frozen=True)
@@ -197,6 +201,284 @@ PORTFOLIO_AXES = [
     "Prosody",
     "Cohesion",
 ]
+
+TOPIC_DIVERSITY_DOMAINS = [
+    {
+        "domain": "Healthcare",
+        "register": ["neutral", "formal"],
+        "sample": "Tuve que pedir una segunda opinión para el diagnóstico.",
+        "keywords": ["salud", "diagnóstico", "síntoma", "consulta", "tratamiento"],
+        "lexicon": [
+            {"term": "diagnóstico", "meaning": "identificación médica", "register": "formal", "pos": "noun"},
+            {"term": "síntoma", "meaning": "señal clínica", "register": "neutral", "pos": "noun"},
+            {"term": "recetar", "meaning": "indicar un tratamiento", "register": "formal", "pos": "verb"},
+        ],
+    },
+    {
+        "domain": "Housing",
+        "register": ["formal", "neutral"],
+        "sample": "El contrato de arrendamiento incluye cláusulas de mantenimiento.",
+        "keywords": ["alquiler", "contrato", "arrendamiento", "fianza", "piso"],
+        "lexicon": [
+            {"term": "arrendamiento", "meaning": "contrato de alquiler", "register": "formal", "pos": "noun"},
+            {"term": "fianza", "meaning": "depósito de garantía", "register": "neutral", "pos": "noun"},
+            {"term": "cláusula", "meaning": "condición contractual", "register": "formal", "pos": "noun"},
+        ],
+    },
+    {
+        "domain": "Relationships",
+        "register": ["neutral", "casual"],
+        "sample": "Necesitamos hablar con calma para aclarar lo que pasó.",
+        "keywords": ["relación", "confianza", "pareja", "aclarar", "apoyo"],
+        "lexicon": [
+            {"term": "aclarar", "meaning": "explicar para evitar malentendidos", "register": "neutral", "pos": "verb"},
+            {"term": "apoyo", "meaning": "respaldo emocional", "register": "neutral", "pos": "noun"},
+            {"term": "confianza", "meaning": "seguridad en la relación", "register": "neutral", "pos": "noun"},
+        ],
+    },
+    {
+        "domain": "Travel problems",
+        "register": ["neutral", "casual"],
+        "sample": "El vuelo se retrasó y perdimos la conexión.",
+        "keywords": ["vuelo", "retraso", "conexión", "equipaje", "reserva"],
+        "lexicon": [
+            {"term": "retraso", "meaning": "demora en horario", "register": "neutral", "pos": "noun"},
+            {"term": "reclamar", "meaning": "pedir una compensación", "register": "formal", "pos": "verb"},
+            {"term": "conexión", "meaning": "tramo de viaje enlazado", "register": "neutral", "pos": "noun"},
+        ],
+    },
+    {
+        "domain": "Workplace conflict",
+        "register": ["formal", "neutral"],
+        "sample": "Tuvimos que mediar para evitar que el conflicto escalara.",
+        "keywords": ["conflicto", "equipo", "reunión", "responsabilidad", "plazo"],
+        "lexicon": [
+            {"term": "mediar", "meaning": "intervenir para resolver", "register": "formal", "pos": "verb"},
+            {"term": "tensión", "meaning": "estado de fricción", "register": "neutral", "pos": "noun"},
+            {"term": "responsabilidad", "meaning": "obligación asignada", "register": "formal", "pos": "noun"},
+        ],
+    },
+    {
+        "domain": "Finance",
+        "register": ["formal", "neutral"],
+        "sample": "Necesito ajustar el presupuesto para cerrar el trimestre.",
+        "keywords": ["presupuesto", "factura", "ingresos", "gastos", "ahorro"],
+        "lexicon": [
+            {"term": "presupuesto", "meaning": "plan de gastos e ingresos", "register": "formal", "pos": "noun"},
+            {"term": "liquidez", "meaning": "dinero disponible", "register": "formal", "pos": "noun"},
+            {"term": "facturar", "meaning": "emitir factura", "register": "formal", "pos": "verb"},
+        ],
+    },
+    {
+        "domain": "Cooking",
+        "register": ["neutral", "casual"],
+        "sample": "Salteé las verduras antes de añadir la salsa.",
+        "keywords": ["receta", "horno", "saltear", "sabor", "ingrediente"],
+        "lexicon": [
+            {"term": "saltear", "meaning": "cocinar rápidamente con poco aceite", "register": "neutral", "pos": "verb"},
+            {"term": "ingrediente", "meaning": "componente de una receta", "register": "neutral", "pos": "noun"},
+            {"term": "sazonar", "meaning": "añadir condimentos", "register": "neutral", "pos": "verb"},
+        ],
+    },
+    {
+        "domain": "Emotions",
+        "register": ["neutral", "formal"],
+        "sample": "Me invadió una mezcla de alivio y cansancio.",
+        "keywords": ["emociones", "alivio", "ansiedad", "frustración", "calma"],
+        "lexicon": [
+            {"term": "alivio", "meaning": "sensación de descanso", "register": "neutral", "pos": "noun"},
+            {"term": "frustración", "meaning": "malestar por expectativas incumplidas", "register": "formal", "pos": "noun"},
+            {"term": "serenar", "meaning": "calmar el ánimo", "register": "formal", "pos": "verb"},
+        ],
+    },
+    {
+        "domain": "Bureaucracy",
+        "register": ["formal"],
+        "sample": "Hay que tramitar el documento antes del plazo.",
+        "keywords": ["trámite", "documento", "solicitud", "plazo", "oficina"],
+        "lexicon": [
+            {"term": "tramitar", "meaning": "gestionar un proceso", "register": "formal", "pos": "verb"},
+            {"term": "solicitud", "meaning": "pedido formal", "register": "formal", "pos": "noun"},
+            {"term": "plazo", "meaning": "tiempo límite", "register": "formal", "pos": "noun"},
+        ],
+    },
+    {
+        "domain": "Everyday slang-light",
+        "register": ["casual"],
+        "sample": "Qué bajón, se cayó el plan a última hora.",
+        "keywords": ["plan", "bajón", "rollo", "vale", "guay"],
+        "lexicon": [
+            {"term": "bajón", "meaning": "desánimo repentino", "register": "casual", "pos": "noun"},
+            {"term": "rollo", "meaning": "tema o situación", "register": "casual", "pos": "noun"},
+            {"term": "guay", "meaning": "genial", "register": "casual", "pos": "adjective"},
+        ],
+    },
+]
+
+VOCAB_CONTEXT_UNITS = [
+    {
+        "term": "tomar una decisión",
+        "collocations": ["tomar una decisión", "tomar una postura"],
+        "contexts": [
+            "—¿Ya resolviste lo del cambio de proveedor?\n—Sí, tomamos una decisión anoche.",
+            "Mensaje: Tomamos una decisión: renegociar el contrato esta semana.",
+            "Mini-parágrafo: Tras revisar los datos, el comité tomó una decisión estratégica para proteger el margen.",
+        ],
+        "question": "¿Quién tomó la decisión en los ejemplos?",
+        "cloze": {
+            "sentence": "Después de analizarlo, ___ una decisión rápida.",
+            "options": ["tomamos", "hicimos", "dimos"],
+            "answer": "tomamos",
+            "explanation": "Tomar es el verbo natural para decisiones en español.",
+        },
+        "scenario": "Escribe una frase en la que decidas algo en un contexto laboral.",
+        "swap": {
+            "base": "Tomamos una decisión prudente para evitar el riesgo.",
+            "choices": ["medida", "postura", "ruta"],
+        },
+    },
+    {
+        "term": "me da la sensación de que",
+        "collocations": ["me da la sensación de que", "me da la impresión de que"],
+        "contexts": [
+            "Diálogo: Me da la sensación de que el cliente está dudando.",
+            "Texto: Me da la sensación de que llegaremos tarde si no salimos ya.",
+            "Mini-parágrafo: Me da la sensación de que el equipo necesita más claridad en los objetivos.",
+        ],
+        "question": "¿Qué indica la frase: certeza o percepción?",
+        "cloze": {
+            "sentence": "___ no están totalmente convencidos de la propuesta.",
+            "options": ["Me da la sensación de que", "Estoy seguro de que", "Confirmo que"],
+            "answer": "Me da la sensación de que",
+            "explanation": "La frase indica percepción, no certeza absoluta.",
+        },
+        "scenario": "Escribe una frase que exprese intuición sobre un proyecto.",
+        "swap": {
+            "base": "Me da la sensación de que el plan es viable.",
+            "choices": ["posible", "arriesgado", "inviable"],
+        },
+    },
+]
+
+VERB_CHOICE_STUDIO = [
+    {
+        "scenario": "Quieres explicar que lograste sacar un proyecto adelante pese a obstáculos.",
+        "options": [
+            {
+                "verb": "sacar adelante",
+                "register": "neutral",
+                "intensity": "alta",
+                "implication": "superar obstáculos y completar algo complejo",
+                "objects": "proyecto, iniciativa, proceso",
+            },
+            {
+                "verb": "terminar",
+                "register": "neutral",
+                "intensity": "media",
+                "implication": "completar sin enfatizar esfuerzo",
+                "objects": "tarea, informe",
+            },
+            {
+                "verb": "hacer",
+                "register": "casual",
+                "intensity": "baja",
+                "implication": "acción genérica, poco precisa",
+                "objects": "cosas, trabajo",
+            },
+        ],
+        "best": "sacar adelante",
+        "also": ["terminar"],
+        "contrast": [
+            "Terminar suena neutro y no comunica la presión.",
+            "Hacer es demasiado vago para este contexto.",
+        ],
+    },
+    {
+        "scenario": "Necesitas expresar que alcanzaste un objetivo medible.",
+        "options": [
+            {
+                "verb": "alcanzar",
+                "register": "formal",
+                "intensity": "media",
+                "implication": "logro cuantificable",
+                "objects": "meta, objetivo, cifra",
+            },
+            {
+                "verb": "conseguir",
+                "register": "neutral",
+                "intensity": "media",
+                "implication": "logro general, menos técnico",
+                "objects": "resultado, permiso",
+            },
+            {
+                "verb": "lograr",
+                "register": "formal",
+                "intensity": "alta",
+                "implication": "esfuerzo destacado",
+                "objects": "acuerdo, avance",
+            },
+        ],
+        "best": "alcanzar",
+        "also": ["lograr"],
+        "contrast": [
+            "Lograr es más enfático; úsalo si quieres destacar esfuerzo.",
+            "Conseguir es correcto pero menos preciso para metas numéricas.",
+        ],
+    },
+]
+
+DAILY_MISSION_GRAMMAR = [
+    "subjuntivo con sugerencias (Es importante que + subjuntivo)",
+    "condicional para propuestas (Podríamos...)",
+    "conectores concesivos (aunque, si bien)",
+    "pretérito vs imperfecto (marcar fondo y acción puntual)",
+]
+
+DAILY_MISSION_VERBS = [
+    "sopesar",
+    "desactivar",
+    "plantear",
+    "afrontar",
+    "tramitar",
+    "aportar",
+    "exigir",
+]
+
+CONTENT_INGEST_HINTS = {
+    "Healthcare": ["salud", "médico", "hospital", "síntoma", "diagnóstico"],
+    "Housing": ["alquiler", "piso", "hipoteca", "contrato", "vecino"],
+    "Travel problems": ["vuelo", "hotel", "reserva", "retraso", "equipaje"],
+    "Finance": ["precio", "factura", "presupuesto", "inversión", "pago"],
+    "Workplace conflict": ["reunión", "equipo", "conflicto", "jefe", "plazo"],
+}
+
+CONVERSATION_GOAL_SCENARIOS = [
+    {
+        "title": "Negociar un reembolso",
+        "brief": "El servicio falló y necesitas un reembolso parcial sin romper la relación.",
+        "hidden_targets": [
+            "Usa 2 mitigadores (quizá, tal vez, me parece).",
+            "Incluye una concesión (aunque, si bien).",
+            "Evita 'aplicar para' como calco.",
+        ],
+    },
+    {
+        "title": "Resolver un conflicto en el trabajo",
+        "brief": "Un colega no cumplió plazos y necesitas renegociar el cronograma.",
+        "hidden_targets": [
+            "Usa 1 verbo preciso (afrontar, plantear, desactivar).",
+            "Incluye una petición indirecta (¿sería posible...?).",
+            "Mantén registro neutral-formal.",
+        ],
+    },
+]
+
+ERROR_TAGS = {
+    "dependen en": "preposition",
+    "tomar una decisión en": "preposition",
+    "la problema": "gender agreement",
+    "verb precision": "verb choice",
+}
 
 VOCAB_DOMAINS = [
     {
@@ -865,6 +1147,26 @@ def init_state() -> None:
         st.session_state.review_step = 0
     if "mistake_log" not in st.session_state:
         st.session_state.mistake_log = {}
+    if "domain_exposure" not in st.session_state:
+        st.session_state.domain_exposure = {d["domain"]: 0 for d in TOPIC_DIVERSITY_DOMAINS}
+    if "grammar_review_queue" not in st.session_state:
+        st.session_state.grammar_review_queue = {}
+    if "grammar_review_step" not in st.session_state:
+        st.session_state.grammar_review_step = 0
+    if "mistake_notebook" not in st.session_state:
+        st.session_state.mistake_notebook = []
+    if "daily_mission_history" not in st.session_state:
+        st.session_state.daily_mission_history = []
+    if "speaking_minutes" not in st.session_state:
+        st.session_state.speaking_minutes = 0
+    if "active_vocab" not in st.session_state:
+        st.session_state.active_vocab = set()
+    if "active_verbs" not in st.session_state:
+        st.session_state.active_verbs = set()
+    if "error_review_queue" not in st.session_state:
+        st.session_state.error_review_queue = {}
+    if "error_review_step" not in st.session_state:
+        st.session_state.error_review_step = 0
 
 
 def load_portfolio() -> dict:
@@ -881,6 +1183,97 @@ def load_portfolio() -> dict:
 def save_portfolio() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     PORTFOLIO_PATH.write_text(json.dumps(st.session_state.portfolio, indent=2), encoding="utf-8")
+
+
+def init_db() -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vocab_items (
+                term TEXT PRIMARY KEY,
+                meaning TEXT,
+                example TEXT,
+                domain TEXT,
+                register TEXT,
+                part_of_speech TEXT,
+                created_at TEXT
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS mistakes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                pattern TEXT,
+                correction TEXT,
+                tag TEXT,
+                user_text TEXT,
+                corrected_text TEXT,
+                confidence REAL,
+                created_at TEXT
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS transcripts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                transcript TEXT,
+                created_at TEXT
+            )
+            """
+        )
+
+
+def save_vocab_item(item: dict) -> None:
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO vocab_items
+            (term, meaning, example, domain, register, part_of_speech, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                item["term"],
+                item.get("meaning"),
+                item.get("example"),
+                item.get("domain"),
+                item.get("register"),
+                item.get("pos"),
+                date.today().isoformat(),
+            ),
+        )
+
+
+def save_mistake_entry(entry: dict) -> None:
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """
+            INSERT INTO mistakes
+            (pattern, correction, tag, user_text, corrected_text, confidence, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                entry["pattern"],
+                entry["correction"],
+                entry["tag"],
+                entry.get("user_text"),
+                entry.get("corrected_text"),
+                entry["confidence"],
+                entry["date"],
+            ),
+        )
+
+
+def save_transcript(text: str) -> None:
+    if not text.strip():
+        return
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            "INSERT INTO transcripts (transcript, created_at) VALUES (?, ?)",
+            (text, date.today().isoformat()),
+        )
 
 
 def seed_for_week(week: date, name: str) -> int:
@@ -1556,6 +1949,57 @@ def render_overview() -> None:
         " and portfolio-grade evidence for advanced Spanish learners."
     )
 
+    shares = domain_coverage_share()
+    domain_percent = {domain: f"{share:.0%}" for domain, share in shares.items()}
+    active_vocab_count = len(st.session_state.active_vocab)
+    active_verb_count = len(st.session_state.active_verbs)
+    error_total = sum(item["count"] for item in st.session_state.mistake_log.values()) if st.session_state.mistake_log else 0
+
+    st.markdown("### Progress that matters")
+    st.markdown(
+        """
+        <div class="metric-grid">
+            <div class="card">
+                <h3>Domain coverage</h3>
+                <p>Tracks how balanced your exposure is across themes.</p>
+            </div>
+            <div class="card">
+                <h3>Verb range</h3>
+                <p>Counts distinct precision verbs used in practice.</p>
+            </div>
+            <div class="card">
+                <h3>Error trend</h3>
+                <p>Shows top recurring errors and reduction over time.</p>
+            </div>
+            <div class="card">
+                <h3>Speaking minutes</h3>
+                <p>Manual tracking from daily missions.</p>
+            </div>
+            <div class="card">
+                <h3>Active vocabulary</h3>
+                <p>Items produced, not just recognized.</p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.write("**Domain coverage snapshot**")
+    st.write(domain_percent)
+    st.write(
+        [
+            {"Metric": "Verb range", "Value": len(DAILY_MISSION_VERBS)},
+            {"Metric": "Active verbs used", "Value": active_verb_count},
+            {"Metric": "Top errors logged", "Value": error_total},
+            {"Metric": "Speaking minutes", "Value": st.session_state.speaking_minutes},
+            {"Metric": "Active vocabulary", "Value": active_vocab_count},
+        ]
+    )
+
+    st.markdown("### Fast navigation")
+    if st.button("Do a 5-minute session"):
+        st.session_state.quick_session = True
+        st.success("Quick session ready. Jump to Growth Studio or Daily Missions.")
+
     st.markdown(
         """
         <div class="metric-grid">
@@ -1592,6 +2036,16 @@ def render_overview() -> None:
         unsafe_allow_html=True,
     )
 
+    st.markdown("### Placement & calibration")
+    st.write("Short adaptive test to seed your first week.")
+    calibration = st.radio(
+        "Choose the most natural option",
+        ["Tomamos una decisión.", "Hicimos una decisión.", "Dimos una decisión."],
+    )
+    if st.button("Save calibration"):
+        st.session_state.profile["level"] = "C1" if calibration == "Tomamos una decisión." else "C1"
+        st.success("Calibration saved. Adaptive missions will now reflect this baseline.")
+
 
 def add_review_items(items: list[dict]) -> None:
     for item in items:
@@ -1601,16 +2055,142 @@ def add_review_items(items: list[dict]) -> None:
                 "term": item["term"],
                 "meaning": item["meaning"],
                 "example": item["example"],
+                "domain": item.get("domain"),
+                "register": item.get("register"),
+                "pos": item.get("pos"),
                 "streak": 0,
                 "next_due": 0,
             }
+            if item.get("domain"):
+                record_domain_exposure(item["domain"])
+            save_vocab_item(item)
 
 
-def log_mistake(pattern: str, correction: str) -> None:
+def add_error_review_item(tag: str, entry: dict) -> None:
+    queue = st.session_state.error_review_queue.setdefault(tag, [])
+    entry_with_schedule = {
+        **entry,
+        "streak": 0,
+        "next_due": st.session_state.error_review_step,
+    }
+    queue.append(entry_with_schedule)
+
+
+def update_error_review_item(tag: str, index: int, success: bool) -> None:
+    item = st.session_state.error_review_queue[tag][index]
+    if success:
+        item["streak"] += 1
+    else:
+        item["streak"] = 0
+    item["next_due"] = st.session_state.error_review_step + (2 ** item["streak"])
+
+
+def log_mistake(pattern: str, correction: str, user_text: str | None = None, corrected_text: str | None = None) -> None:
     log = st.session_state.mistake_log
     if pattern not in log:
         log[pattern] = {"correction": correction, "count": 0}
     log[pattern]["count"] += 1
+    entry = {
+        "date": date.today().isoformat(),
+        "pattern": pattern,
+        "correction": correction,
+        "tag": ERROR_TAGS.get(pattern, "general"),
+        "confidence": round(random.uniform(0.6, 0.95), 2),
+        "user_text": user_text,
+        "corrected_text": corrected_text,
+    }
+    st.session_state.mistake_notebook.append(entry)
+    add_error_review_item(entry["tag"], entry)
+    save_mistake_entry(entry)
+
+
+def record_domain_exposure(domain: str) -> None:
+    st.session_state.domain_exposure[domain] = st.session_state.domain_exposure.get(domain, 0) + 1
+
+
+def domain_coverage_share() -> dict[str, float]:
+    total = sum(st.session_state.domain_exposure.values()) or 1
+    return {domain: count / total for domain, count in st.session_state.domain_exposure.items()}
+
+
+def pick_domain_pair() -> tuple[str, str]:
+    shares = domain_coverage_share()
+    stretch = min(shares, key=shares.get)
+    familiar = max(shares, key=shares.get)
+    return familiar, stretch
+
+
+def add_grammar_review_item(item_id: str, focus: str, explanation: str, example: str) -> None:
+    if item_id not in st.session_state.grammar_review_queue:
+        st.session_state.grammar_review_queue[item_id] = {
+            "focus": focus,
+            "explanation": explanation,
+            "example": example,
+            "streak": 0,
+            "next_due": 0,
+        }
+
+
+def update_grammar_review_item(item_id: str, success: bool) -> None:
+    item = st.session_state.grammar_review_queue[item_id]
+    if success:
+        item["streak"] += 1
+    else:
+        item["streak"] = 0
+    item["next_due"] = st.session_state.grammar_review_step + (2 ** item["streak"])
+
+
+def highlight_diff(original: str, corrected: str) -> str:
+    diff = []
+    for token in difflib.ndiff(original.split(), corrected.split()):
+        if token.startswith("- "):
+            diff.append(f"<span style='background-color:#fee2e2;'>{token[2:]}</span>")
+        elif token.startswith("+ "):
+            diff.append(f"<span style='background-color:#dcfce7;'>{token[2:]}</span>")
+        elif token.startswith("  "):
+            diff.append(token[2:])
+    return " ".join(diff)
+
+
+def sentence_split(text: str) -> list[str]:
+    parts = []
+    buffer = ""
+    for char in text:
+        buffer += char
+        if char in ".!?":
+            parts.append(buffer.strip())
+            buffer = ""
+    if buffer.strip():
+        parts.append(buffer.strip())
+    return parts
+
+
+def extract_candidate_phrases(text: str) -> list[dict]:
+    tokens = [token.strip(".,;:!?¡¿()").lower() for token in text.split()]
+    tokens = [token for token in tokens if token]
+    stopwords = {"de", "la", "el", "y", "en", "a", "que", "por", "para"}
+    counts: dict[str, int] = {}
+    for idx in range(len(tokens) - 1):
+        phrase = f"{tokens[idx]} {tokens[idx + 1]}"
+        if set(phrase.split()) & stopwords:
+            continue
+        counts[phrase] = counts.get(phrase, 0) + 1
+    for idx in range(len(tokens) - 2):
+        phrase = f"{tokens[idx]} {tokens[idx + 1]} {tokens[idx + 2]}"
+        if set(phrase.split()) & stopwords:
+            continue
+        counts[phrase] = counts.get(phrase, 0) + 1
+    ranked = sorted(counts.items(), key=lambda item: item[1], reverse=True)
+    return [{"phrase": phrase, "count": count} for phrase, count in ranked]
+
+
+def detect_domains(text: str) -> list[str]:
+    lowered = text.lower()
+    hits = []
+    for domain, keywords in CONTENT_INGEST_HINTS.items():
+        if any(keyword in lowered for keyword in keywords):
+            hits.append(domain)
+    return hits or ["General"]
 
 
 def update_review_item(item_id: str, success: bool) -> None:
@@ -1650,7 +2230,15 @@ def render_growth_studio() -> None:
     )
     if st.button("Save vocab to review"):
         add_review_items(
-            [item for item in selected_domain["lexicon"] if item["term"] in chosen_terms]
+            [
+                {
+                    **item,
+                    "domain": selected_domain["domain"],
+                    "pos": "verb" if item["term"].endswith("ar") else "noun",
+                }
+                for item in selected_domain["lexicon"]
+                if item["term"] in chosen_terms
+            ]
         )
         st.success("Added to review queue.")
 
@@ -1664,6 +2252,7 @@ def render_growth_studio() -> None:
         used_terms = [item["term"] for item in selected_domain["lexicon"] if item["term"] in vocab_response]
         if len(used_terms) >= 3:
             st.success(f"Great—used: {', '.join(used_terms)}.")
+            st.session_state.active_vocab.update(used_terms)
         else:
             st.warning(
                 "Try to include at least 3 target words. Detected: "
@@ -1711,7 +2300,13 @@ def render_growth_studio() -> None:
                 st.success(f"{drill['focus']}: Correct.")
             else:
                 st.error(f"{drill['focus']}: Correct answer is {drill['answer']}.")
-                log_mistake(drill["prompt"], drill["answer"])
+                log_mistake(drill["prompt"], drill["answer"], user_text=choice, corrected_text=drill["answer"])
+                add_grammar_review_item(
+                    drill["prompt"],
+                    drill["focus"],
+                    drill["explanation"],
+                    drill["examples"][0],
+                )
             st.caption(drill["explanation"])
             st.write("Examples: " + " • ".join(drill["examples"]))
 
@@ -1778,8 +2373,508 @@ def render_growth_studio() -> None:
         )
 
 
+def render_topic_diversity_engine() -> None:
+    st.header("Topic-Diversity Vocabulary Engine")
+    st.write("Rotate across underexposed domains to escape the same-news-same-words loop.")
+
+    familiar, stretch = pick_domain_pair()
+    st.caption(f"Suggested mix: 70% familiar ({familiar}) • 30% stretch ({stretch})")
+
+    domains = [d["domain"] for d in TOPIC_DIVERSITY_DOMAINS]
+    if "topic_domain" not in st.session_state:
+        st.session_state.topic_domain = stretch
+    selected_domain = st.selectbox("Choose a domain", domains, key="topic_domain")
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("Surprise me"):
+            st.session_state.topic_domain = stretch
+            selected_domain = stretch
+            st.success(f"Stretch domain selected: {stretch}")
+    with col2:
+        st.markdown("**Register options**")
+        selected = next(d for d in TOPIC_DIVERSITY_DOMAINS if d["domain"] == selected_domain)
+        st.write(", ".join(selected["register"]))
+
+    st.markdown("**Domain prompt**")
+    st.info(selected["sample"])
+    st.markdown("**Session mix**")
+    st.write(
+        [
+            {"Type": "Familiar (70%)", "Domain": familiar},
+            {"Type": "Stretch (30%)", "Domain": stretch},
+        ]
+    )
+    if st.button("Log exposure"):
+        record_domain_exposure(selected_domain)
+        st.success("Exposure logged.")
+
+    st.markdown("**Save domain vocabulary**")
+    domain_terms = {item["term"]: item for item in selected["lexicon"]}
+    st.table(selected["lexicon"])
+    selected_terms = st.multiselect("Select terms to learn", list(domain_terms.keys()))
+    if st.button("Save selected terms"):
+        add_review_items(
+            [
+                {
+                    **domain_terms[term],
+                    "domain": selected_domain,
+                }
+                for term in selected_terms
+            ]
+        )
+        st.success("Saved with domain + register + part of speech tags.")
+
+    st.markdown("**Domain coverage**")
+    shares = domain_coverage_share()
+    for domain, share in shares.items():
+        st.progress(min(share, 1.0), text=f"{domain}: {share:.0%}")
+
+
+def render_context_first_units() -> None:
+    st.header("Context-First Vocabulary Units")
+    st.write("Learn phrases through dialogue, messages, and mini-paragraphs.")
+
+    unit_term = st.selectbox("Choose a unit", [unit["term"] for unit in VOCAB_CONTEXT_UNITS])
+    unit = next(item for item in VOCAB_CONTEXT_UNITS if item["term"] == unit_term)
+    tabs = st.tabs(["Context", "Practice", "Your sentence", "Review"])
+
+    with tabs[0]:
+        st.markdown("**Collocations**: " + ", ".join(unit["collocations"]))
+        for context in unit["contexts"]:
+            st.info(context)
+        st.markdown(f"**Check:** {unit['question']}")
+
+    with tabs[1]:
+        st.markdown("**Step A: Comprehension check**")
+        st.text_input(unit["question"], placeholder="Answer in one line")
+        st.markdown("**Step B: Cloze with a twist**")
+        choice = st.radio(unit["cloze"]["sentence"], unit["cloze"]["options"])
+        if st.button("Check cloze"):
+            if choice == unit["cloze"]["answer"]:
+                st.success("Correct!")
+            else:
+                st.error("Try again.")
+                st.caption(unit["cloze"]["explanation"])
+        st.markdown("**Step D: Swap one word**")
+        swap_choice = st.selectbox(
+            unit["swap"]["base"], unit["swap"]["choices"], key=f"swap-{unit_term}"
+        )
+        st.caption(f"Rewrite by swapping one word: {swap_choice}")
+
+    with tabs[2]:
+        st.markdown("**Step C: Forced output**")
+        response = st.text_area(unit["scenario"], height=120)
+        if st.button("Log sentence"):
+            if response.strip():
+                st.session_state.active_vocab.update(unit["collocations"])
+                st.success("Saved to active vocabulary.")
+            else:
+                st.info("Write a response to log it.")
+
+    with tabs[3]:
+        st.markdown("**Review prompts**")
+        st.write(
+            [
+                "¿Qué contexto fue más natural para esta frase?",
+                "¿Qué sinónimo usarías para variar el registro?",
+                "¿Puedes reescribir la frase con un conector concesivo?",
+            ]
+        )
+
+
+def render_verb_choice_studio() -> None:
+    st.header("Verb Choice Studio")
+    st.write("Pick the verb that best matches tone, intensity, and implication.")
+
+    scenario = st.selectbox("Scenario", [item["scenario"] for item in VERB_CHOICE_STUDIO])
+    drill = next(item for item in VERB_CHOICE_STUDIO if item["scenario"] == scenario)
+    option_map = {option["verb"]: option for option in drill["options"]}
+    choice = st.radio("Choose the best verb", list(option_map.keys()))
+    explanation = st.text_input("Explain your choice in one line")
+
+    if st.button("Reveal guidance"):
+        if choice == drill["best"]:
+            st.success("Best fit.")
+        elif choice in drill["also"]:
+            st.info("Also possible, but not the best fit.")
+        else:
+            st.error("Sounds odd in this context.")
+        st.session_state.active_verbs.add(choice)
+        if explanation.strip():
+            st.caption(f"Your rationale: {explanation}")
+        st.markdown("**Why**")
+        for line in drill["contrast"]:
+            st.write(f"- {line}")
+        st.markdown("**Micro-notes**")
+        st.write(
+            [
+                {
+                    "Verb": option["verb"],
+                    "Register": option["register"],
+                    "Intensity": option["intensity"],
+                    "Implication": option["implication"],
+                    "Typical objects": option["objects"],
+                }
+                for option in drill["options"]
+            ]
+        )
+
+
+def render_tiny_mistake_catcher() -> None:
+    st.header("Real-time Tiny Mistake Catcher")
+    st.write("Catch agreement, tense, and clitic slips with short, focused feedback.")
+    draft = st.text_area("Type a sentence", height=120)
+    st.toggle("Optional LLM second pass (not configured)", value=False, disabled=True)
+
+    if st.button("Check sentence"):
+        corrections = []
+        for mistake in COMMON_MISTAKES:
+            if mistake["pattern"] in draft.lower():
+                corrections.append(mistake)
+        if "ser" in draft.lower() and "listo" in draft.lower() and "está" not in draft.lower():
+            corrections.append(
+                {
+                    "pattern": "ser listo",
+                    "correction": "estar listo",
+                    "explanation": "Estados temporales requieren estar.",
+                    "examples": ["El plan está listo.", "La sala está lista."],
+                }
+            )
+        if not corrections:
+            st.success("No common issues detected.")
+        else:
+            for correction in corrections:
+                fixed = draft.replace(correction["pattern"], correction["correction"])
+                log_mistake(
+                    correction["pattern"],
+                    correction["correction"],
+                    user_text=draft,
+                    corrected_text=fixed,
+                )
+                st.markdown("**Diff**")
+                st.markdown(highlight_diff(draft, fixed), unsafe_allow_html=True)
+                st.markdown(f"**Correction:** {fixed}")
+                st.caption(correction["explanation"])
+                st.write("Examples: " + " • ".join(correction["examples"]))
+
+
+def render_daily_missions() -> None:
+    st.header("Output-First Daily Missions")
+    st.write("Short daily tasks with constraints for speaking and writing.")
+
+    today_seed = seed_for_week(date.today(), st.session_state.profile["name"])
+    random.seed(today_seed)
+    mission_vocab = random.sample(DAILY_MISSION_VERBS, k=2)
+    grammar_target = random.choice(DAILY_MISSION_GRAMMAR)
+    verb_target = random.choice(DAILY_MISSION_VERBS)
+
+    st.markdown("**Today's constraints**")
+    st.markdown(f"- Use 2 of these verbs/phrases: {', '.join(mission_vocab)}")
+    st.markdown(f"- Include one grammar target: {grammar_target}")
+    st.markdown(f"- Highlight verb nuance: {verb_target}")
+
+    st.subheader("Speaking (60–90 seconds)")
+    audio = st.file_uploader("Upload a recording", type=["wav", "mp3", "m4a"])
+    if audio:
+        st.session_state.speaking_minutes += 1
+        st.success("Recording received. Add a short transcript below.")
+    transcript = st.text_area("Transcript (optional)", height=100)
+
+    st.subheader("Writing (2–4 sentences)")
+    response = st.text_area("Write your response", height=140, key="daily-writing")
+    if st.button("Submit mission"):
+        if response.strip():
+            feedback = []
+            for mistake in COMMON_MISTAKES:
+                if mistake["pattern"] in response.lower():
+                    feedback.append(mistake)
+                    log_mistake(mistake["pattern"], mistake["correction"], user_text=response)
+            st.session_state.daily_mission_history.append(
+                {
+                    "date": date.today().isoformat(),
+                    "response": response,
+                    "constraints": [mission_vocab, grammar_target, verb_target],
+                    "transcript": transcript,
+                }
+            )
+            st.session_state.active_vocab.update(mission_vocab)
+            st.session_state.active_verbs.add(verb_target)
+            save_transcript(transcript)
+            if feedback:
+                st.warning("Corrections needed before retry.")
+                for item in feedback:
+                    st.markdown(f"- **Correction**: {item['correction']}")
+                    st.caption(item["explanation"])
+                st.info("Retry prompt: rewrite your response using the corrections.")
+            else:
+                st.success("Mission saved. Retry with corrections to reinforce.")
+        else:
+            st.info("Write a response before submitting.")
+
+
+def render_error_notebook() -> None:
+    st.header("Personalized Error Notebook")
+    st.write("Track recurring errors and review by error type.")
+
+    if not st.session_state.mistake_notebook:
+        st.info("No errors logged yet. Practice to populate the notebook.")
+        return
+
+    st.markdown("**Your top errors**")
+    st.dataframe(st.session_state.mistake_notebook, use_container_width=True)
+
+    tag_counts = {}
+    for entry in st.session_state.mistake_notebook:
+        tag_counts[entry["tag"]] = tag_counts.get(entry["tag"], 0) + 1
+    st.markdown("**Trend by error type**")
+    trend_rows = [{"Tag": tag, "Count": count} for tag, count in tag_counts.items()]
+    st.write(trend_rows)
+    st.bar_chart({row["Tag"]: row["Count"] for row in trend_rows})
+
+    tag = st.selectbox("Practice this error", sorted(tag_counts.keys()))
+    st.session_state.error_review_step += 1
+    queue = st.session_state.error_review_queue.get(tag, [])
+    due_items = [
+        (idx, item) for idx, item in enumerate(queue)
+        if item["next_due"] <= st.session_state.error_review_step
+    ]
+    if due_items:
+        idx, item = due_items[0]
+        st.markdown(f"**Pattern:** {item['pattern']}")
+        st.caption(f"Correction: {item['correction']}")
+        if item.get("corrected_text"):
+            st.info(f"Original → Corrected: {item['corrected_text']}")
+            st.markdown("**Micro-drill**")
+            st.write(
+                "Reescribe la frase cambiando un solo detalle (tiempo verbal o sujeto) y mantén la corrección."
+            )
+        st.text_area("Rewrite a correct version", height=100, key=f"error-rewrite-{tag}")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Got it", key=f"error-pass-{tag}-{idx}"):
+                update_error_review_item(tag, idx, True)
+                st.success("Scheduled further out.")
+        with col2:
+            if st.button("Missed", key=f"error-fail-{tag}-{idx}"):
+                update_error_review_item(tag, idx, False)
+                st.warning("Scheduled sooner.")
+    else:
+        st.info("No items due for this error tag yet.")
+
+
+def render_review_hub() -> None:
+    st.header("Two-Layer Spaced Review")
+    st.write("Separate streams for vocabulary and grammar patterns.")
+
+    st.subheader("Vocabulary review")
+    st.session_state.review_step += 1
+    due_vocab = [
+        item for item in st.session_state.review_queue.values()
+        if item["next_due"] <= st.session_state.review_step
+    ]
+    if not due_vocab:
+        st.info("No vocab items due.")
+    for item in due_vocab:
+        stage = "meaning" if item["streak"] == 0 else "usage" if item["streak"] == 1 else "production"
+        st.markdown(f"**{item['term']}** — {item['meaning']}")
+        st.caption(f"{item['example']} • Stage: {stage}")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Got it", key=f"hub-vocab-pass-{item['term']}"):
+                update_review_item(item["term"], True)
+                st.success("Scheduled later.")
+        with col2:
+            if st.button("Missed", key=f"hub-vocab-fail-{item['term']}"):
+                update_review_item(item["term"], False)
+                st.warning("Scheduled sooner.")
+
+    st.subheader("Grammar review")
+    st.session_state.grammar_review_step += 1
+    due_grammar = [
+        item for item in st.session_state.grammar_review_queue.values()
+        if item["next_due"] <= st.session_state.grammar_review_step
+    ]
+    if not due_grammar:
+        st.info("No grammar items due.")
+    for item_id, item in st.session_state.grammar_review_queue.items():
+        if item["next_due"] > st.session_state.grammar_review_step:
+            continue
+        stage = "recognition" if item["streak"] == 0 else "constrained" if item["streak"] == 1 else "free"
+        st.markdown(f"**{item['focus']}**")
+        st.caption(f"{item['explanation']} • Stage: {stage}")
+        st.write(f"Example: {item['example']}")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Got it", key=f"hub-grammar-pass-{item_id}"):
+                update_grammar_review_item(item_id, True)
+                st.success("Scheduled later.")
+        with col2:
+            if st.button("Missed", key=f"hub-grammar-fail-{item_id}"):
+                update_grammar_review_item(item_id, False)
+                st.warning("Scheduled sooner.")
+
+    st.subheader("Interleaving mix")
+    if due_vocab and due_grammar:
+        mixed_prompt = random.choice(
+            [
+                f"Vocab: define '{due_vocab[0]['term']}' and use it in a sentence.",
+                f"Grammar: apply '{due_grammar[0]['focus']}' in a new sentence.",
+            ]
+        )
+        st.info(mixed_prompt)
+        st.text_area("Mixed response", height=120, key="interleaving-response")
+    else:
+        st.caption("Interleaving unlocks once both queues have due items.")
+
+def render_content_ingest() -> None:
+    st.header("Bring Your Own Content")
+    st.write("Paste content to extract phrases and build practice.")
+
+    raw = st.text_area("Paste article or transcript", height=180)
+    if st.button("Extract"):
+        sentences = sentence_split(raw)
+        candidates = extract_candidate_phrases(raw)
+        known = {item["term"] for item in st.session_state.review_queue.values()}
+        filtered = [item for item in candidates if item["phrase"] not in known and item["count"] >= 1][:20]
+        domains = detect_domains(raw)
+        st.markdown(f"**Detected domains:** {', '.join(domains)}")
+        st.markdown("**Candidates**")
+        selections = []
+        for item in filtered:
+            phrase = item["phrase"]
+            status = st.selectbox(
+                f"{phrase} (freq {item['count']})",
+                ["Learn", "Skip", "Already know"],
+                key=f"phrase-status-{phrase}",
+            )
+            if status == "Learn":
+                selections.append(phrase)
+        if selections:
+            for phrase in selections:
+                add_review_items(
+                    [
+                        {
+                            "term": phrase,
+                            "meaning": "to define",
+                            "example": f"Contexto: {phrase} ...",
+                            "domain": domains[0] if domains else "General",
+                            "register": "neutral",
+                            "pos": "phrase",
+                        }
+                    ]
+                )
+            st.success("Added selected phrases to review queue.")
+        st.markdown("**Auto-contexts**")
+        for sentence in sentences[:3]:
+            st.info(sentence)
+
+
+def render_conversation_goals() -> None:
+    st.header("Conversation Mode with Goals")
+    st.write("Goal-driven roleplays with hidden targets and corrective replay.")
+
+    scenario = st.selectbox("Choose a mission", [s["title"] for s in CONVERSATION_GOAL_SCENARIOS])
+    selected = next(s for s in CONVERSATION_GOAL_SCENARIOS if s["title"] == scenario)
+    st.markdown(f"**Brief:** {selected['brief']}")
+    response = st.text_area("Your response", height=180, key="goal-convo")
+
+    if st.button("Finish conversation"):
+        lowered = response.lower()
+        st.markdown("**Inline corrections**")
+        for mistake in COMMON_MISTAKES:
+            if mistake["pattern"] in lowered:
+                st.warning(f"Correction: {mistake['correction']} — {mistake['explanation']}")
+                log_mistake(mistake["pattern"], mistake["correction"], user_text=response)
+        st.markdown("**Hidden targets**")
+        results = []
+        for target in selected["hidden_targets"]:
+            if "mitigadores" in target:
+                passed = any(token in lowered for token in ["quizá", "tal vez", "me parece"])
+            elif "concesión" in target:
+                passed = any(token in lowered for token in ["aunque", "si bien", "a pesar de"])
+            elif "verbo preciso" in target:
+                passed = any(token in lowered for token in ["afrontar", "plantear", "desactivar"])
+            elif "petición indirecta" in target:
+                passed = "sería posible" in lowered or "podría" in lowered
+            elif "calco" in target:
+                passed = "aplicar para" not in lowered
+            else:
+                passed = False
+            results.append((target, passed))
+        for target, passed in results:
+            st.write(f"{'✅' if passed else '❌'} {target}")
+        st.info("Replay task: rewrite your response applying the missed targets.")
+        st.markdown("**What you did well**")
+        st.write(
+            "- Maintained focus on the task goal.\n"
+            "- Included at least one register marker."
+        )
+        st.markdown("**One thing to repeat tomorrow**")
+        st.write("Reuse the missed targets in a new, shorter response.")
+
+
+def render_settings() -> None:
+    st.header("Settings & data portability")
+    st.write("Export vocab, mistakes, and transcripts for portability.")
+
+    vocab_export = json.dumps(list(st.session_state.review_queue.values()), indent=2)
+    mistakes_export = json.dumps(st.session_state.mistake_notebook, indent=2)
+    transcripts_export = json.dumps(
+        [entry.get("transcript", "") for entry in st.session_state.daily_mission_history],
+        indent=2,
+    )
+
+    st.download_button("Download vocab JSON", data=vocab_export, file_name="vocab.json")
+    st.download_button("Download mistakes JSON", data=mistakes_export, file_name="mistakes.json")
+    st.download_button("Download transcripts JSON", data=transcripts_export, file_name="transcripts.json")
+
+    vocab_csv = StringIO()
+    vocab_writer = DictWriter(
+        vocab_csv, fieldnames=["term", "meaning", "example", "domain", "register", "pos"]
+    )
+    vocab_writer.writeheader()
+    for item in st.session_state.review_queue.values():
+        vocab_writer.writerow(item)
+
+    mistakes_csv = StringIO()
+    mistake_writer = DictWriter(
+        mistakes_csv,
+        fieldnames=[
+            "date",
+            "pattern",
+            "correction",
+            "tag",
+            "confidence",
+            "user_text",
+            "corrected_text",
+        ],
+    )
+    mistake_writer.writeheader()
+    for item in st.session_state.mistake_notebook:
+        mistake_writer.writerow(item)
+
+    transcripts_csv = StringIO()
+    transcript_writer = DictWriter(transcripts_csv, fieldnames=["date", "transcript"])
+    transcript_writer.writeheader()
+    for entry in st.session_state.daily_mission_history:
+        transcript_writer.writerow(
+            {"date": entry["date"], "transcript": entry.get("transcript", "")}
+        )
+
+    st.download_button("Download vocab CSV", data=vocab_csv.getvalue(), file_name="vocab.csv")
+    st.download_button(
+        "Download mistakes CSV", data=mistakes_csv.getvalue(), file_name="mistakes.csv"
+    )
+    st.download_button(
+        "Download transcripts CSV",
+        data=transcripts_csv.getvalue(),
+        file_name="transcripts.csv",
+    )
+
+
 def main() -> None:
     set_theme()
+    init_db()
     init_state()
     render_profile_sidebar()
 
@@ -1790,9 +2885,17 @@ def main() -> None:
         "Go to",
         [
             "Overview",
+            "Topic Diversity",
+            "Context Units",
             "Growth Studio",
+            "Verb Choice Studio",
+            "Tiny Mistake Catcher",
+            "Daily Missions",
+            "Review Hub",
+            "Error Notebook",
             "Weekly Mission",
             "Adaptive Inputs",
+            "Content Ingest",
             "Nuance Feedback",
             "Relationship Memory",
             "Live Mode",
@@ -1800,23 +2903,41 @@ def main() -> None:
             "Register Simulator",
             "Prosody Coach",
             "Collocation Engine",
+            "Conversation Goals",
             "Conversation Lab",
             "Writing Studio",
             "Argumentation",
             "Dialect Tuning",
             "Listening for Nuance",
             "Portfolio",
+            "Settings",
         ],
     )
 
     if nav == "Overview":
         render_overview()
+    elif nav == "Topic Diversity":
+        render_topic_diversity_engine()
+    elif nav == "Context Units":
+        render_context_first_units()
     elif nav == "Growth Studio":
         render_growth_studio()
+    elif nav == "Verb Choice Studio":
+        render_verb_choice_studio()
+    elif nav == "Tiny Mistake Catcher":
+        render_tiny_mistake_catcher()
+    elif nav == "Daily Missions":
+        render_daily_missions()
+    elif nav == "Review Hub":
+        render_review_hub()
+    elif nav == "Error Notebook":
+        render_error_notebook()
     elif nav == "Weekly Mission":
         render_mission_control()
     elif nav == "Adaptive Inputs":
         render_adaptive_input_selection()
+    elif nav == "Content Ingest":
+        render_content_ingest()
     elif nav == "Nuance Feedback":
         render_nuance_feedback()
     elif nav == "Relationship Memory":
@@ -1831,6 +2952,8 @@ def main() -> None:
         render_pronunciation_coach()
     elif nav == "Collocation Engine":
         render_collocation_engine()
+    elif nav == "Conversation Goals":
+        render_conversation_goals()
     elif nav == "Conversation Lab":
         render_conversation_lab()
     elif nav == "Writing Studio":
@@ -1843,6 +2966,8 @@ def main() -> None:
         render_listening_nuance()
     elif nav == "Portfolio":
         render_portfolio()
+    elif nav == "Settings":
+        render_settings()
 
 
 if __name__ == "__main__":
