@@ -6,7 +6,7 @@ from datetime import date
 from utils.theme import render_hero, render_section_header
 from utils.database import save_vocab_item, record_progress
 from utils.content import VOCAB_CONTEXT_UNITS
-from utils.helpers import seed_for_day, generate_exercise_feedback
+from utils.helpers import seed_for_day, generate_exercise_feedback, detect_language
 
 
 def render_context_units_page():
@@ -143,8 +143,23 @@ def render_context_units_page():
 
         if st.button("Submit Sentence", key="submit_sentence"):
             if user_sentence.strip():
-                # Check if the phrase is used
-                if unit["term"].lower() in user_sentence.lower():
+                # First check if the sentence is in Spanish
+                lang_info = detect_language(user_sentence)
+
+                if lang_info["language"] == "english":
+                    st.markdown("""
+                    <div class="feedback-box feedback-error">
+                        🌐 <strong>Please write in Spanish!</strong> Your sentence appears to be in English.
+                    </div>
+                    """, unsafe_allow_html=True)
+                elif lang_info["language"] == "mixed":
+                    st.markdown("""
+                    <div class="feedback-box feedback-warning">
+                        🔀 <strong>Mixed language detected.</strong> Try to write entirely in Spanish.
+                    </div>
+                    """, unsafe_allow_html=True)
+                # Check if the phrase is used (only if language is OK)
+                elif unit["term"].lower() in user_sentence.lower():
                     st.markdown("""
                     <div class="feedback-box feedback-success">
                         ✅ <strong>Great!</strong> You've used the phrase correctly in context.

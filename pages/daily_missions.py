@@ -7,7 +7,7 @@ from datetime import date
 from utils.theme import render_hero, render_section_header
 from utils.database import (
     save_daily_mission, get_today_mission, update_mission_response,
-    record_progress, save_transcript
+    record_progress, save_transcript, get_user_profile
 )
 from utils.content import DAILY_MISSION_TEMPLATES
 from utils.helpers import seed_for_day, analyze_constraints, check_text_for_mistakes
@@ -70,9 +70,11 @@ def render_daily_missions_page():
     with col2:
         render_section_header("Mission Stats")
 
-        # Quick stats
+        # Quick stats - use profile's weekly goal setting
+        profile = get_user_profile()
+        weekly_goal = profile.get("weekly_goal", 6)
         st.metric("Missions Today", "1" if today_mission else "0")
-        st.metric("Weekly Goal", "6")
+        st.metric("Weekly Goal", str(weekly_goal))
 
         # Constraint hints
         st.markdown("### Constraint Guide")
@@ -251,11 +253,19 @@ def process_mission_response(mission: dict, response: str, duration: int = 0):
     constraints = mission.get("constraints", [])
     mission_type = mission.get("type", "writing")
 
-    # Analyze constraints
-    constraint_results = analyze_constraints(response, constraints)
+    # Analyze constraints with error handling
+    try:
+        constraint_results = analyze_constraints(response, constraints)
+    except Exception:
+        constraint_results = {}  # Gracefully handle errors
 
-    # Check for mistakes
-    mistakes = check_text_for_mistakes(response)
+    # Check for mistakes with error handling
+    try:
+        mistakes = check_text_for_mistakes(response)
+        # Filter out language warnings for scoring (they don't count as mistakes)
+        mistakes = [m for m in mistakes if m.get("tag") != "language"]
+    except Exception:
+        mistakes = []  # Gracefully handle errors
 
     # Calculate score
     constraints_met = sum(1 for c in constraint_results.values() if c.get("met", False))

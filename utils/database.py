@@ -185,10 +185,11 @@ def init_db() -> None:
             )
         """)
 
-        # Transcripts for speaking practice
+        # Transcripts for speaking practice - with profile_id for data isolation
         conn.execute("""
             CREATE TABLE IF NOT EXISTS transcripts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                profile_id INTEGER DEFAULT 1,
                 transcript TEXT NOT NULL,
                 mission_id INTEGER,
                 duration_seconds INTEGER,
@@ -1120,15 +1121,16 @@ def get_active_vocab_count() -> int:
 
 
 def save_transcript(text: str, duration: int = 0, mission_id: Optional[int] = None) -> None:
-    """Save a transcript."""
+    """Save a transcript for the active profile."""
     if not text.strip():
         return
+    profile_id = get_active_profile_id()
     try:
         with get_connection() as conn:
             conn.execute("""
-                INSERT INTO transcripts (transcript, duration_seconds, mission_id)
-                VALUES (?, ?, ?)
-            """, (text, duration, mission_id))
+                INSERT INTO transcripts (profile_id, transcript, duration_seconds, mission_id)
+                VALUES (?, ?, ?, ?)
+            """, (profile_id, text, duration, mission_id))
             conn.commit()
     except Exception as e:
         logger.warning(f"Transcript save failed: {e}")
