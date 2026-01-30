@@ -4,7 +4,7 @@ import streamlit as st
 from utils.theme import render_hero, render_section_header
 from utils.database import save_mistake, record_progress
 from utils.content import COMMON_MISTAKES, GRAMMAR_MICRODRILLS
-from utils.helpers import check_text_for_mistakes, generate_corrected_text, highlight_diff
+from utils.helpers import check_text_for_mistakes, generate_corrected_text, highlight_diff, detect_language
 
 
 def render_mistake_catcher_page():
@@ -73,13 +73,21 @@ def render_text_checker():
             st.rerun()
 
     if check_btn and user_text.strip():
-        # Perform mistake checking
-        mistakes = check_text_for_mistakes(user_text)
-        st.session_state.mc_mistakes = mistakes
+        with st.spinner("Analyzing your text..."):
+            # Perform mistake checking
+            mistakes = check_text_for_mistakes(user_text)
+            st.session_state.mc_mistakes = mistakes
 
-        if mistakes:
-            corrected = generate_corrected_text(user_text, mistakes)
-            st.session_state.mc_corrected = corrected
+            if mistakes:
+                # Only generate corrected text for non-language errors
+                language_errors = [m for m in mistakes if m.get("tag") == "language"]
+                other_errors = [m for m in mistakes if m.get("tag") != "language"]
+
+                if other_errors:
+                    corrected = generate_corrected_text(user_text, other_errors)
+                    st.session_state.mc_corrected = corrected
+                else:
+                    st.session_state.mc_corrected = ""
 
     # Display results
     if st.session_state.mc_mistakes:
@@ -88,74 +96,125 @@ def render_text_checker():
 
         mistakes = st.session_state.mc_mistakes
 
-        # Summary
-        st.markdown(f"""
-        <div class="card" style="border-left: 4px solid var(--warning);">
-            <strong>Found {len(mistakes)} potential issue{'s' if len(mistakes) > 1 else ''}:</strong>
-        </div>
-        """, unsafe_allow_html=True)
+        # Separate language issues from grammar issues
+        language_issues = [m for m in mistakes if m.get("tag") == "language"]
+        grammar_issues = [m for m in mistakes if m.get("tag") != "language"]
 
-        # Show diff
-        if st.session_state.mc_corrected:
-            st.markdown("### Corrected Version")
+        # Show language warning prominently if present
+        if language_issues:
+            for lang_issue in language_issues:
+                if "English" in lang_issue.get("explanation", ""):
+                    st.markdown(f"""
+                    <div class="feedback-box feedback-error" style="border-left: 4px solid var(--error);">
+                        🌐 <strong>Language Issue:</strong> {lang_issue['explanation']}
+                        <br><br>
+                        <em>Tip: {lang_issue['examples'][0] if lang_issue.get('examples') else 'Write in Spanish to practice!'}</em>
+                    </div>
+                    """, unsafe_allow_html=True)
+                elif "Mixed" in lang_issue.get("explanation", ""):
+                    st.markdown(f"""
+                    <div class="feedback-box feedback-warning" style="border-left: 4px solid var(--warning);">
+                        🔀 <strong>Mixed Language:</strong> {lang_issue['explanation']}
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="feedback-box feedback-info">
+                        ℹ️ <strong>Note:</strong> {lang_issue['explanation']}
+                    </div>
+                    """, unsafe_allow_html=True)
 
-            diff_html = highlight_diff(st.session_state.mc_text, st.session_state.mc_corrected)
+        # Show grammar issues if any
+        if grammar_issues:
+            # Summary
             st.markdown(f"""
-            <div class="card-muted">
-                <p style="font-size: 1.125rem; line-height: 1.8;">{st.session_state.mc_corrected}</p>
+            <div class="card" style="border-left: 4px solid var(--warning);">
+                <strong>Found {len(grammar_issues)} grammar issue{'s' if len(grammar_issues) > 1 else ''}:</strong>
             </div>
             """, unsafe_allow_html=True)
 
-        # Detailed mistakes
-        st.markdown("### Detailed Corrections")
+            # Show diff
+            if st.session_state.mc_corrected:
+                st.markdown("### Corrected Version")
 
-        for i, mistake in enumerate(mistakes, 1):
-            error_icon = {
-                "gender": "👤",
-                "preposition": "📍",
-                "copula": "🔄",
-                "calque": "🌐",
-                "false_friend": "⚠️",
-            }.get(mistake.get("tag", ""), "❌")
+                st.markdown(f"""
+                <div class="card-muted">
+                    <p style="font-size: 1.125rem; line-height: 1.8;">{st.session_state.mc_corrected}</p>
+                </div>
+                """, unsafe_allow_html=True)
 
-            with st.expander(f"{error_icon} Issue {i}: {mistake['original']} → {mistake['correction']}", expanded=i == 1):
-                col1, col2 = st.columns([3, 1])
+            # Detailed mistakes
+            st.markdown("### Detailed Corrections")
 
-                with col1:
-                    st.markdown(f"**Original:** `{mistake['original']}`")
-                    st.markdown(f"**Correction:** `{mistake['correction']}`")
-                    st.markdown(f"**Explanation:** {mistake['explanation']}")
+            for i, mistake in enumerate(grammar_issues, 1):
+                error_icon = {
+                    "gender": "👤",
+                    "preposition": "📍",
+                    "copula": "🔄",
+                    "calque": "🌐",
+                    "false_friend": "⚠️",
+                    "style": "✨",
+                    "language": "🌐",
+                }.get(mistake.get("tag", ""), "❌")
 
-                    if mistake.get("examples"):
-                        st.markdown("**Examples using the correct form:**")
-                        for ex in mistake["examples"][:2]:
-                            st.markdown(f"- _{ex}_")
+                with st.expander(f"{error_icon} Issue {i}: {mistake['original']} → {mistake['correction']}", expanded=i == 1):
+                    col1, col2 = st.columns([3, 1])
 
-                with col2:
-                    st.markdown(f"""
-                    <span class="pill pill-error">{mistake.get('tag', 'error')}</span>
-                    """, unsafe_allow_html=True)
+                    with col1:
+                        st.markdown(f"**Original:** `{mistake['original']}`")
+                        st.markdown(f"**Correction:** `{mistake['correction']}`")
+                        st.markdown(f"**Explanation:** {mistake['explanation']}")
 
-                    # Save to error notebook
-                    if st.button("📝 Save to Notebook", key=f"save_mistake_{i}"):
-                        save_mistake({
-                            "user_text": st.session_state.mc_text,
-                            "corrected_text": st.session_state.mc_corrected,
-                            "error_type": mistake.get("tag", "unknown"),
-                            "error_tag": mistake.get("tag"),
-                            "pattern": mistake["original"],
-                            "explanation": mistake["explanation"],
-                            "examples": mistake.get("examples", []),
-                        })
-                        record_progress({"errors_fixed": 1})
-                        st.success("Saved to your Error Notebook!")
+                        if mistake.get("examples"):
+                            st.markdown("**Examples using the correct form:**")
+                            for ex in mistake["examples"][:2]:
+                                st.markdown(f"- _{ex}_")
+
+                    with col2:
+                        tag_color = {
+                            "gender": "error",
+                            "preposition": "warning",
+                            "copula": "primary",
+                            "calque": "secondary",
+                            "false_friend": "warning",
+                            "style": "muted",
+                        }.get(mistake.get("tag", ""), "error")
+
+                        st.markdown(f"""
+                        <span class="pill pill-{tag_color}">{mistake.get('tag', 'error')}</span>
+                        """, unsafe_allow_html=True)
+
+                        # Save to error notebook (only for non-style issues)
+                        if mistake.get("tag") != "style":
+                            if st.button("📝 Save to Notebook", key=f"save_mistake_{i}"):
+                                save_mistake({
+                                    "user_text": st.session_state.mc_text,
+                                    "corrected_text": st.session_state.mc_corrected or user_text,
+                                    "error_type": mistake.get("tag", "unknown"),
+                                    "error_tag": mistake.get("tag"),
+                                    "pattern": mistake["original"],
+                                    "explanation": mistake["explanation"],
+                                    "examples": mistake.get("examples", []),
+                                })
+                                record_progress({"errors_fixed": 1})
+                                st.success("Saved to your Error Notebook!")
 
     elif check_btn and user_text.strip():
-        st.markdown("""
-        <div class="feedback-box feedback-success">
-            ✅ <strong>No common mistakes detected!</strong> Your text looks good.
-        </div>
-        """, unsafe_allow_html=True)
+        # If no mistakes found, show success but only if it's actually Spanish
+        lang_info = detect_language(user_text)
+        if lang_info["language"] == "spanish":
+            st.markdown("""
+            <div class="feedback-box feedback-success">
+                ✅ <strong>Excellent!</strong> No common mistakes detected in your Spanish text. Keep practicing!
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            # This shouldn't happen often since check_text_for_mistakes should catch it
+            st.markdown("""
+            <div class="feedback-box feedback-info">
+                ℹ️ <strong>Analysis complete.</strong> Make sure to write in Spanish to get the most out of this tool.
+            </div>
+            """, unsafe_allow_html=True)
 
 
 def render_grammar_drills():

@@ -52,39 +52,174 @@ def calculate_domain_coverage(exposures: dict) -> dict:
     }
 
 
+def detect_language(text: str) -> dict:
+    """
+    Detect if text is likely Spanish, English, or mixed.
+    Returns dict with language info and confidence.
+    """
+    text_lower = text.lower()
+    words = re.findall(r'\b[a-záéíóúüñ]+\b', text_lower)
+
+    if not words:
+        return {"language": "unknown", "confidence": 0, "spanish_ratio": 0}
+
+    # Common Spanish words (articles, prepositions, conjunctions, common verbs)
+    spanish_indicators = {
+        # Articles
+        "el", "la", "los", "las", "un", "una", "unos", "unas",
+        # Prepositions
+        "de", "en", "con", "por", "para", "sin", "sobre", "entre", "hacia", "desde", "hasta",
+        # Conjunctions
+        "y", "o", "pero", "sino", "aunque", "porque", "cuando", "si", "que", "como",
+        # Common verbs
+        "es", "está", "son", "están", "hay", "tiene", "tengo", "puede", "puedo",
+        "soy", "estoy", "ser", "estar", "hacer", "hago", "hace", "quiero", "quiere",
+        "voy", "va", "ir", "venir", "vengo", "viene", "decir", "digo", "dice",
+        # Pronouns
+        "yo", "tú", "él", "ella", "nosotros", "ellos", "ellas", "usted", "ustedes",
+        "me", "te", "le", "nos", "les", "lo", "la", "se",
+        # Common words
+        "muy", "más", "menos", "bien", "mal", "todo", "todos", "nada", "algo",
+        "este", "esta", "esto", "ese", "esa", "eso", "aquel", "aquella",
+        "mi", "tu", "su", "mis", "tus", "sus", "nuestro", "nuestra",
+    }
+
+    # Common English words that would indicate English text
+    english_indicators = {
+        # Articles/determiners
+        "the", "a", "an", "this", "that", "these", "those",
+        # Prepositions
+        "of", "in", "to", "for", "with", "on", "at", "from", "by", "about",
+        # Conjunctions
+        "and", "or", "but", "if", "when", "because", "although", "while",
+        # Common verbs
+        "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
+        "do", "does", "did", "will", "would", "could", "should", "can", "may",
+        "get", "got", "go", "went", "come", "came", "make", "made", "take", "took",
+        # Pronouns
+        "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them",
+        "my", "your", "his", "its", "our", "their", "what", "who", "which",
+        # Common words
+        "not", "no", "yes", "just", "only", "also", "very", "much", "many",
+        "here", "there", "where", "how", "why", "all", "some", "any", "every",
+        "know", "think", "want", "need", "like", "love", "work", "help",
+    }
+
+    spanish_count = sum(1 for w in words if w in spanish_indicators)
+    english_count = sum(1 for w in words if w in english_indicators)
+
+    # Check for Spanish-specific characters (accents, ñ)
+    has_spanish_chars = bool(re.search(r'[áéíóúüñ¿¡]', text_lower))
+
+    # Calculate ratios
+    total_words = len(words)
+    spanish_ratio = spanish_count / total_words if total_words > 0 else 0
+    english_ratio = english_count / total_words if total_words > 0 else 0
+
+    # Boost Spanish score if Spanish characters present
+    if has_spanish_chars:
+        spanish_ratio += 0.15
+
+    # Determine language
+    if spanish_ratio > english_ratio and spanish_ratio > 0.15:
+        confidence = min(spanish_ratio * 2, 1.0)
+        return {"language": "spanish", "confidence": confidence, "spanish_ratio": spanish_ratio, "english_ratio": english_ratio}
+    elif english_ratio > spanish_ratio and english_ratio > 0.15:
+        confidence = min(english_ratio * 2, 1.0)
+        return {"language": "english", "confidence": confidence, "spanish_ratio": spanish_ratio, "english_ratio": english_ratio}
+    elif spanish_ratio > 0 or english_ratio > 0:
+        return {"language": "mixed", "confidence": 0.5, "spanish_ratio": spanish_ratio, "english_ratio": english_ratio}
+    else:
+        return {"language": "unknown", "confidence": 0, "spanish_ratio": 0, "english_ratio": 0}
+
+
 def check_text_for_mistakes(text: str) -> list[dict]:
     """
     Check text for common mistakes using rule-based patterns.
     Returns list of detected mistakes with corrections.
+
+    Now includes:
+    - Language detection (warns if not Spanish)
+    - Common Spanish learner mistakes
+    - Gender agreement errors
+    - Ser/Estar confusion
+    - Preposition errors
+    - False friends and calques
     """
     mistakes_found = []
     text_lower = text.lower()
 
+    # First, check if text is actually Spanish
+    lang_info = detect_language(text)
+
+    if lang_info["language"] == "english":
+        mistakes_found.append({
+            "original": text[:50] + "..." if len(text) > 50 else text,
+            "correction": "(Write in Spanish)",
+            "explanation": f"This appears to be English text (confidence: {lang_info['confidence']:.0%}). Please write in Spanish to practice.",
+            "examples": ["Intenta escribir: 'No sé qué estoy escribiendo aquí'"],
+            "tag": "language",
+            "position": 0,
+        })
+        return mistakes_found  # Return early - no point checking Spanish rules on English text
+
+    if lang_info["language"] == "unknown" and len(text.strip()) > 10:
+        mistakes_found.append({
+            "original": text[:30] + "..." if len(text) > 30 else text,
+            "correction": "(Unable to analyze)",
+            "explanation": "Could not determine the language. Please write a longer text in Spanish.",
+            "examples": [],
+            "tag": "language",
+            "position": 0,
+        })
+
+    if lang_info["language"] == "mixed":
+        mistakes_found.append({
+            "original": "Mixed language detected",
+            "correction": "(Write entirely in Spanish)",
+            "explanation": f"Your text appears to mix Spanish ({lang_info['spanish_ratio']:.0%}) and English ({lang_info['english_ratio']:.0%}). Try to write entirely in Spanish.",
+            "examples": ["Evita mezclar idiomas en la misma oración"],
+            "tag": "language",
+            "position": 0,
+        })
+
+    # Check against common mistakes database
     for mistake in COMMON_MISTAKES:
         pattern = mistake["pattern"].lower()
         if pattern in text_lower:
-            # Find the position
             pos = text_lower.find(pattern)
             mistakes_found.append({
                 "original": text[pos:pos + len(pattern)],
                 "correction": mistake["correction"],
                 "explanation": mistake["explanation"],
-                "examples": mistake["examples"],
+                "examples": mistake.get("examples", []),
                 "tag": mistake["tag"],
                 "position": pos,
             })
 
-    # Additional rule-based checks
-
-    # Gender agreement check for common words
+    # Gender agreement patterns (expanded)
     gender_patterns = [
-        (r"\bla problema\b", "el problema", "gender", "Problema es masculino"),
-        (r"\bel tema\b.*\bbuena\b", "buen/bueno", "gender", "Tema es masculino"),
+        (r"\bla problema\b", "el problema", "gender", "Problema es masculino pese a terminar en -a"),
+        (r"\bun problema\s+grande\b", "un problema grande", "gender", None),  # This is correct, skip
+        (r"\bla tema\b", "el tema", "gender", "Tema es masculino pese a terminar en -a"),
+        (r"\bla sistema\b", "el sistema", "gender", "Sistema es masculino"),
+        (r"\bla programa\b", "el programa", "gender", "Programa es masculino"),
+        (r"\bla idioma\b", "el idioma", "gender", "Idioma es masculino"),
+        (r"\bla clima\b", "el clima", "gender", "Clima es masculino"),
+        (r"\bla mapa\b", "el mapa", "gender", "Mapa es masculino"),
+        (r"\bla dia\b", "el día", "gender", "Día es masculino"),
+        (r"\bel mano\b", "la mano", "gender", "Mano es femenino pese a terminar en -o"),
+        (r"\bel foto\b", "la foto", "gender", "Foto (fotografía) es femenino"),
+        (r"\bel moto\b", "la moto", "gender", "Moto (motocicleta) es femenino"),
+        (r"\bel radio\b(?!grafía)", "la radio", "gender", "Radio (emisora) es femenino en la mayoría de países"),
         (r"\bmucho gente\b", "mucha gente", "gender", "Gente es femenino"),
-        (r"\bel agua\b.*\bfrio\b", "fria", "gender", "Agua es femenino (usa el por fonética)"),
+        (r"\bmuchos personas\b", "muchas personas", "gender", "Persona es femenino"),
+        (r"\blos manos\b", "las manos", "gender", "Mano es femenino"),
     ]
 
     for pattern, correction, tag, explanation in gender_patterns:
+        if explanation is None:  # Skip correct patterns
+            continue
         match = re.search(pattern, text_lower)
         if match:
             mistakes_found.append({
@@ -96,11 +231,20 @@ def check_text_for_mistakes(text: str) -> list[dict]:
                 "position": match.start(),
             })
 
-    # Ser/Estar common errors
+    # Ser/Estar confusion (expanded)
     ser_estar_patterns = [
-        (r"\bes muy cansado\b", "esta muy cansado", "copula", "Estados temporales usan estar"),
-        (r"\bsoy de acuerdo\b", "estoy de acuerdo", "copula", "Estar de acuerdo es la expresion correcta"),
-        (r"\besta bueno\b(?! que)", "es bueno", "copula", "Cualidades inherentes usan ser"),
+        (r"\bes cansado\b", "está cansado", "copula", "Estados físicos/emocionales temporales usan estar"),
+        (r"\bes enfermo\b", "está enfermo", "copula", "Estados de salud temporales usan estar"),
+        (r"\bes contento\b", "está contento", "copula", "Estados emocionales usan estar"),
+        (r"\bes triste\b", "está triste", "copula", "Estados emocionales temporales usan estar"),
+        (r"\bes nervioso\b", "está nervioso", "copula", "Estados emocionales usan estar"),
+        (r"\bsoy de acuerdo\b", "estoy de acuerdo", "copula", "'Estar de acuerdo' es la expresión correcta"),
+        (r"\bsoy seguro que\b", "estoy seguro de que", "copula", "'Estar seguro de' es la expresión correcta"),
+        (r"\bes listo\b(?!\s+para)", "está listo", "copula", "'Estar listo' = preparado; 'Ser listo' = inteligente"),
+        (r"\bestá bueno\b(?!\s+que)", "es bueno", "copula", "Cualidades inherentes usan ser (pero 'está bueno' puede ser coloquial)"),
+        (r"\bestá importante\b", "es importante", "copula", "Características esenciales usan ser"),
+        (r"\bestá necesario\b", "es necesario", "copula", "Características esenciales usan ser"),
+        (r"\bestá posible\b", "es posible", "copula", "Posibilidad se expresa con ser"),
     ]
 
     for pattern, correction, tag, explanation in ser_estar_patterns:
@@ -114,6 +258,76 @@ def check_text_for_mistakes(text: str) -> list[dict]:
                 "tag": tag,
                 "position": match.start(),
             })
+
+    # Preposition errors (expanded)
+    preposition_patterns = [
+        (r"\bpensar sobre\b", "pensar en", "preposition", "En español se dice 'pensar en' no 'pensar sobre'"),
+        (r"\bsoñar sobre\b", "soñar con", "preposition", "En español se dice 'soñar con'"),
+        (r"\bdepend[eo] en\b", "depender de", "preposition", "Depender siempre va con 'de'"),
+        (r"\bconfiar sobre\b", "confiar en", "preposition", "Se dice 'confiar en'"),
+        (r"\bcontar sobre\b", "contar con", "preposition", "Se dice 'contar con' (to count on)"),
+        (r"\besperar para\b", "esperar a", "preposition", "'Esperar a' alguien/algo"),
+        (r"\bllegar a casa\b", "llegar a casa", "preposition", None),  # Correct
+        (r"\bllegar en casa\b", "llegar a casa", "preposition", "Se usa 'llegar a' no 'llegar en'"),
+        (r"\bentrar en\b", "entrar en", "preposition", None),  # Correct
+        (r"\bentrar a\b(?!\s+trabajar)", "entrar en", "preposition", "En España se prefiere 'entrar en' (en Latinoamérica 'entrar a' es común)"),
+        (r"\bcasarse a\b", "casarse con", "preposition", "Se dice 'casarse con' alguien"),
+        (r"\benamorarse de\b", "enamorarse de", "preposition", None),  # Correct
+        (r"\benamorarse con\b", "enamorarse de", "preposition", "Se dice 'enamorarse de' no 'con'"),
+    ]
+
+    for pattern, correction, tag, explanation in preposition_patterns:
+        if explanation is None:  # Skip correct patterns
+            continue
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": [],
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # Common English calques and false friends
+    calque_patterns = [
+        (r"\baplicar para\b", "solicitar", "calque", "Calco del inglés 'apply for'. Usa 'solicitar' o 'presentarse a'"),
+        (r"\btomar lugar\b", "tener lugar", "calque", "Calco de 'take place'. Se dice 'tener lugar'"),
+        (r"\bhacer sentido\b", "tener sentido", "calque", "Calco de 'make sense'. Se dice 'tener sentido'"),
+        (r"\bllamar atrás\b", "devolver la llamada", "calque", "Calco de 'call back'. Se dice 'devolver la llamada'"),
+        (r"\bcorrer para\b(?!\s+\w+\s+minutos)", "presentarse a", "calque", "Calco de 'run for' (candidatura). Se dice 'presentarse a'"),
+        (r"\brealizar que\b", "darse cuenta de que", "false_friend", "'Realizar' = llevar a cabo; para 'realize' usa 'darse cuenta'"),
+        (r"\bactualmente\b", "actualmente/en realidad", "false_friend", "'Actualmente' = ahora; para 'actually' usa 'en realidad'"),
+        (r"\beventualmente\b", "eventualmente/finalmente", "false_friend", "'Eventualmente' = posiblemente; para 'eventually' usa 'finalmente'"),
+        (r"\bsensible\b", "sensible/sensato", "false_friend", "'Sensible' = sensitive; para 'sensible' usa 'sensato'"),
+        (r"\bexcitado\b", "emocionado", "false_friend", "'Excitado' tiene connotación sexual. Usa 'emocionado' o 'entusiasmado'"),
+        (r"\bembarazada\b(?!\s+de)", "embarazada/avergonzada", "false_friend", "'Embarazada' = pregnant; para 'embarrassed' usa 'avergonzado/a'"),
+    ]
+
+    for pattern, correction, tag, explanation in calque_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            mistakes_found.append({
+                "original": match.group(),
+                "correction": correction,
+                "explanation": explanation,
+                "examples": [],
+                "tag": tag,
+                "position": match.start(),
+            })
+
+    # Subject pronoun overuse (Spanish is a pro-drop language)
+    pronoun_overuse = re.findall(r'\b(yo|tú|él|ella|nosotros|ellos|ellas)\b', text_lower)
+    if len(pronoun_overuse) > 3 and len(text.split()) > 10:
+        mistakes_found.append({
+            "original": f"Pronoun overuse: {', '.join(pronoun_overuse[:4])}...",
+            "correction": "(Consider omitting some subject pronouns)",
+            "explanation": "Spanish is a pro-drop language - subject pronouns are often unnecessary and can sound repetitive. Only use them for emphasis or clarity.",
+            "examples": ["'Yo quiero ir' → 'Quiero ir' (unless emphasizing 'I')"],
+            "tag": "style",
+            "position": 0,
+        })
 
     return mistakes_found
 
