@@ -357,48 +357,54 @@ def get_profile(profile_id: int) -> Optional[dict]:
 
 def update_profile(profile_id: int, profile: dict) -> None:
     """Update a profile."""
-    with get_connection() as conn:
-        conn.execute("""
-            UPDATE profiles SET
-                name = ?,
-                level = ?,
-                weekly_goal = ?,
-                placement_completed = ?,
-                placement_score = ?,
-                focus_areas = ?,
-                dialect_preference = ?,
-                avatar_color = ?,
-                updated_at = ?
-            WHERE id = ?
-        """, (
-            profile.get("name", ""),
-            profile.get("level", "C1"),
-            profile.get("weekly_goal", 6),
-            profile.get("placement_completed", 0),
-            profile.get("placement_score"),
-            json.dumps(profile.get("focus_areas", [])),
-            profile.get("dialect_preference", "Spain"),
-            profile.get("avatar_color", "#6366f1"),
-            datetime.now().isoformat(),
-            profile_id
-        ))
-        conn.commit()
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                UPDATE profiles SET
+                    name = ?,
+                    level = ?,
+                    weekly_goal = ?,
+                    placement_completed = ?,
+                    placement_score = ?,
+                    focus_areas = ?,
+                    dialect_preference = ?,
+                    avatar_color = ?,
+                    updated_at = ?
+                WHERE id = ?
+            """, (
+                profile.get("name", ""),
+                profile.get("level", "C1"),
+                profile.get("weekly_goal", 6),
+                profile.get("placement_completed", 0),
+                profile.get("placement_score"),
+                json.dumps(profile.get("focus_areas", [])),
+                profile.get("dialect_preference", "Spain"),
+                profile.get("avatar_color", "#6366f1"),
+                datetime.now().isoformat(),
+                profile_id
+            ))
+            conn.commit()
+    except Exception:
+        pass
 
 
 def delete_profile(profile_id: int) -> None:
     """Delete a profile and all associated data."""
-    with get_connection() as conn:
-        # Delete all associated data
-        conn.execute("DELETE FROM vocab_items WHERE profile_id = ?", (profile_id,))
-        conn.execute("DELETE FROM mistakes WHERE profile_id = ?", (profile_id,))
-        conn.execute("DELETE FROM domain_exposure WHERE profile_id = ?", (profile_id,))
-        conn.execute("DELETE FROM grammar_patterns WHERE profile_id = ?", (profile_id,))
-        conn.execute("DELETE FROM daily_missions WHERE profile_id = ?", (profile_id,))
-        conn.execute("DELETE FROM conversations WHERE profile_id = ?", (profile_id,))
-        conn.execute("DELETE FROM progress_metrics WHERE profile_id = ?", (profile_id,))
-        conn.execute("DELETE FROM activity_log WHERE profile_id = ?", (profile_id,))
-        conn.execute("DELETE FROM profiles WHERE id = ?", (profile_id,))
-        conn.commit()
+    try:
+        with get_connection() as conn:
+            # Delete all associated data
+            conn.execute("DELETE FROM vocab_items WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM mistakes WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM domain_exposure WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM grammar_patterns WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM daily_missions WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM conversations WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM progress_metrics WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM activity_log WHERE profile_id = ?", (profile_id,))
+            conn.execute("DELETE FROM profiles WHERE id = ?", (profile_id,))
+            conn.commit()
+    except Exception:
+        pass
 
 
 def get_profile_stats(profile_id: int) -> dict:
@@ -438,14 +444,17 @@ def log_activity(activity_type: str, activity_name: str = "", details: str = "",
                  score: float = None, duration_seconds: int = 0) -> None:
     """Log an activity for the active profile."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        conn.execute("""
-            INSERT INTO activity_log
-            (profile_id, activity_type, activity_name, details, score, duration_seconds, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (profile_id, activity_type, activity_name, details, score, duration_seconds,
-              datetime.now().isoformat()))
-        conn.commit()
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                INSERT INTO activity_log
+                (profile_id, activity_type, activity_name, details, score, duration_seconds, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (profile_id, activity_type, activity_name, details, score, duration_seconds,
+                  datetime.now().isoformat()))
+            conn.commit()
+    except Exception:
+        pass  # Activity logging is not critical
 
 
 def get_activity_history(days: int = 30, limit: int = 100) -> list:
@@ -469,31 +478,34 @@ def get_activity_history(days: int = 30, limit: int = 100) -> list:
 def save_vocab_item(item: dict) -> None:
     """Save or update a vocabulary item for the active profile."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        conn.execute("""
-            INSERT INTO vocab_items
-            (profile_id, term, meaning, example, domain, register, part_of_speech, contexts, collocations)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(profile_id, term) DO UPDATE SET
-                meaning = excluded.meaning,
-                example = excluded.example,
-                domain = excluded.domain,
-                register = excluded.register,
-                part_of_speech = excluded.part_of_speech,
-                contexts = excluded.contexts,
-                collocations = excluded.collocations
-        """, (
-            profile_id,
-            item["term"],
-            item.get("meaning"),
-            item.get("example"),
-            item.get("domain"),
-            item.get("register"),
-            item.get("pos") or item.get("part_of_speech"),
-            json.dumps(item.get("contexts", [])),
-            json.dumps(item.get("collocations", []))
-        ))
-        conn.commit()
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                INSERT INTO vocab_items
+                (profile_id, term, meaning, example, domain, register, part_of_speech, contexts, collocations)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(profile_id, term) DO UPDATE SET
+                    meaning = excluded.meaning,
+                    example = excluded.example,
+                    domain = excluded.domain,
+                    register = excluded.register,
+                    part_of_speech = excluded.part_of_speech,
+                    contexts = excluded.contexts,
+                    collocations = excluded.collocations
+            """, (
+                profile_id,
+                item["term"],
+                item.get("meaning"),
+                item.get("example"),
+                item.get("domain"),
+                item.get("register"),
+                item.get("pos") or item.get("part_of_speech"),
+                json.dumps(item.get("contexts", [])),
+                json.dumps(item.get("collocations", []))
+            ))
+            conn.commit()
+    except Exception:
+        pass  # Vocab save is not critical
 
 
 def get_vocab_items(domain: Optional[str] = None, status: Optional[str] = None) -> list:
@@ -534,66 +546,72 @@ def get_vocab_for_review() -> list:
 def update_vocab_review(term: str, quality: int) -> None:
     """Update vocabulary item after review using SM-2 algorithm."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        row = conn.execute(
-            "SELECT * FROM vocab_items WHERE profile_id = ? AND term = ?", (profile_id, term)
-        ).fetchone()
-        if not row:
-            return
+    try:
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM vocab_items WHERE profile_id = ? AND term = ?", (profile_id, term)
+            ).fetchone()
+            if not row:
+                return
 
-        ease_factor = row["ease_factor"]
-        interval = row["interval_days"]
+            ease_factor = row["ease_factor"]
+            interval = row["interval_days"]
 
-        # SM-2 algorithm
-        if quality >= 3:
-            if interval == 1:
-                interval = 6
+            # SM-2 algorithm
+            if quality >= 3:
+                if interval == 1:
+                    interval = 6
+                else:
+                    interval = int(interval * ease_factor)
+                ease_factor = ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
             else:
-                interval = int(interval * ease_factor)
-            ease_factor = ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
-        else:
-            interval = 1
+                interval = 1
 
-        ease_factor = max(1.3, ease_factor)
-        next_review = (date.today() + timedelta(days=interval)).isoformat()
-        status = "learning" if quality < 4 else "mastered" if interval > 21 else "learning"
+            ease_factor = max(1.3, ease_factor)
+            next_review = (date.today() + timedelta(days=interval)).isoformat()
+            status = "learning" if quality < 4 else "mastered" if interval > 21 else "learning"
 
-        conn.execute("""
-            UPDATE vocab_items SET
-                exposure_count = exposure_count + 1,
-                last_reviewed = ?,
-                next_review = ?,
-                ease_factor = ?,
-                interval_days = ?,
-                status = ?
-            WHERE profile_id = ? AND term = ?
-        """, (date.today().isoformat(), next_review, ease_factor, interval, status, profile_id, term))
-        conn.commit()
+            conn.execute("""
+                UPDATE vocab_items SET
+                    exposure_count = exposure_count + 1,
+                    last_reviewed = ?,
+                    next_review = ?,
+                    ease_factor = ?,
+                    interval_days = ?,
+                    status = ?
+                WHERE profile_id = ? AND term = ?
+            """, (date.today().isoformat(), next_review, ease_factor, interval, status, profile_id, term))
+            conn.commit()
+    except Exception:
+        pass  # Review update is not critical
 
 
 # ============== Mistake Operations ==============
 
-def save_mistake(entry: dict) -> int:
+def save_mistake(entry: dict) -> Optional[int]:
     """Save a mistake entry for the active profile and return its ID."""
     profile_id = get_active_profile_id()
-    with get_connection() as conn:
-        cursor = conn.execute("""
-            INSERT INTO mistakes
-            (profile_id, user_text, corrected_text, error_type, error_tag, pattern, explanation, examples, confidence)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            profile_id,
-            entry["user_text"],
-            entry["corrected_text"],
-            entry["error_type"],
-            entry.get("error_tag"),
-            entry.get("pattern"),
-            entry.get("explanation"),
-            json.dumps(entry.get("examples", [])),
-            entry.get("confidence", 0.5)
-        ))
-        conn.commit()
-        return cursor.lastrowid
+    try:
+        with get_connection() as conn:
+            cursor = conn.execute("""
+                INSERT INTO mistakes
+                (profile_id, user_text, corrected_text, error_type, error_tag, pattern, explanation, examples, confidence)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                profile_id,
+                entry["user_text"],
+                entry["corrected_text"],
+                entry["error_type"],
+                entry.get("error_tag"),
+                entry.get("pattern"),
+                entry.get("explanation"),
+                json.dumps(entry.get("examples", [])),
+                entry.get("confidence", 0.5)
+            ))
+            conn.commit()
+            return cursor.lastrowid
+    except Exception:
+        return None
 
 
 def get_mistakes_for_review() -> list:
@@ -984,57 +1002,71 @@ def get_user_profile() -> dict:
 
 def update_user_profile(profile: dict) -> None:
     """Update user profile for the active profile."""
-    profile_id = get_active_profile_id()
+    try:
+        profile_id = get_active_profile_id()
 
-    # Try to update in new profiles table first
-    existing = get_profile(profile_id)
-    if existing:
-        update_profile(profile_id, profile)
-    else:
-        # Fall back to legacy table
-        with get_connection() as conn:
-            conn.execute("""
-                UPDATE user_profile SET
-                    name = ?,
-                    level = ?,
-                    weekly_goal = ?,
-                    placement_completed = ?,
-                    placement_score = ?,
-                    focus_areas = ?,
-                    dialect_preference = ?,
-                    updated_at = ?
-                WHERE id = 1
-            """, (
-                profile.get("name", ""),
-                profile.get("level", "C1"),
-                profile.get("weekly_goal", 6),
-                profile.get("placement_completed", 0),
-                profile.get("placement_score"),
-                json.dumps(profile.get("focus_areas", [])),
-                profile.get("dialect_preference", "Spain"),
-                datetime.now().isoformat()
-            ))
-            conn.commit()
+        # Try to update in new profiles table first
+        existing = get_profile(profile_id)
+        if existing:
+            update_profile(profile_id, profile)
+        else:
+            # Fall back to legacy table
+            with get_connection() as conn:
+                conn.execute("""
+                    UPDATE user_profile SET
+                        name = ?,
+                        level = ?,
+                        weekly_goal = ?,
+                        placement_completed = ?,
+                        placement_score = ?,
+                        focus_areas = ?,
+                        dialect_preference = ?,
+                        updated_at = ?
+                    WHERE id = 1
+                """, (
+                    profile.get("name", ""),
+                    profile.get("level", "C1"),
+                    profile.get("weekly_goal", 6),
+                    profile.get("placement_completed", 0),
+                    profile.get("placement_score"),
+                    json.dumps(profile.get("focus_areas", [])),
+                    profile.get("dialect_preference", "Spain"),
+                    datetime.now().isoformat()
+                ))
+                conn.commit()
+    except Exception:
+        pass  # Profile update is not critical
 
 
 # ============== Portfolio Operations ==============
 
 def load_portfolio() -> dict:
     """Load portfolio from JSON file."""
-    if not PORTFOLIO_PATH.exists():
+    try:
+        if not PORTFOLIO_PATH.exists():
+            return {
+                "writing_samples": [],
+                "recordings": [],
+                "transcripts": [],
+                "benchmarks": [],
+            }
+        return json.loads(PORTFOLIO_PATH.read_text(encoding="utf-8"))
+    except Exception:
         return {
             "writing_samples": [],
             "recordings": [],
             "transcripts": [],
             "benchmarks": [],
         }
-    return json.loads(PORTFOLIO_PATH.read_text(encoding="utf-8"))
 
 
 def save_portfolio(portfolio: dict) -> None:
     """Save portfolio to JSON file."""
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    PORTFOLIO_PATH.write_text(json.dumps(portfolio, indent=2), encoding="utf-8")
+    try:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        PORTFOLIO_PATH.write_text(json.dumps(portfolio, indent=2), encoding="utf-8")
+    except Exception:
+        pass  # Portfolio save is not critical
 
 
 # ============== Export Operations ==============
@@ -1080,9 +1112,12 @@ def save_transcript(text: str, duration: int = 0, mission_id: Optional[int] = No
     """Save a transcript."""
     if not text.strip():
         return
-    with get_connection() as conn:
-        conn.execute("""
-            INSERT INTO transcripts (transcript, duration_seconds, mission_id)
-            VALUES (?, ?, ?)
-        """, (text, duration, mission_id))
-        conn.commit()
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                INSERT INTO transcripts (transcript, duration_seconds, mission_id)
+                VALUES (?, ?, ?)
+            """, (text, duration, mission_id))
+            conn.commit()
+    except Exception:
+        pass  # Transcript save is not critical
