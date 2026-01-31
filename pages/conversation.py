@@ -729,23 +729,56 @@ def render_repair_skills_practice():
             key=f"repair_response_{skill_type}"
         )
 
-        if st.button("Check Response", type="primary"):
-            if response.strip():
-                # Check if any repair phrase was used
-                response_lower = response.lower()
-                used_pattern = None
+        # Track check state
+        repair_checked_key = f"repair_checked_{skill_type}"
+        repair_result_key = f"repair_result_{skill_type}"
 
-                for pattern in patterns:
-                    phrase_start = pattern["phrase"].split("...")[0].lower().strip()
-                    if phrase_start and phrase_start in response_lower:
-                        used_pattern = pattern["phrase"]
-                        break
+        if repair_checked_key not in st.session_state:
+            st.session_state[repair_checked_key] = False
+            st.session_state[repair_result_key] = None
 
-                if used_pattern:
-                    st.success(f"Great! You used: '{used_pattern}'")
-                    record_pragmatics_usage("repair_skills", used_pattern, is_production=True)
-                    record_progress({"speaking_minutes": 0.5})
+        if not st.session_state[repair_checked_key]:
+            if st.button("Check Response", type="primary"):
+                if response.strip():
+                    # Check if any repair phrase was used
+                    response_lower = response.lower()
+                    used_pattern = None
+
+                    for pattern in patterns:
+                        phrase_start = pattern["phrase"].split("...")[0].lower().strip()
+                        if phrase_start and phrase_start in response_lower:
+                            used_pattern = pattern["phrase"]
+                            break
+
+                    if used_pattern:
+                        st.session_state[repair_result_key] = {"success": True, "pattern": used_pattern}
+                        record_pragmatics_usage("repair_skills", used_pattern, is_production=True)
+                        record_progress({"speaking_minutes": 0.5})
+                    else:
+                        st.session_state[repair_result_key] = {"success": False}
+
+                    st.session_state[repair_checked_key] = True
+                    st.rerun()
                 else:
-                    st.warning("Try incorporating one of the repair phrases from above.")
+                    st.warning("Please write a response.")
+        else:
+            # Show result
+            result = st.session_state[repair_result_key]
+
+            if result and result["success"]:
+                st.markdown(f"""
+                <div class="feedback-box feedback-success">
+                    ✅ <strong>Great!</strong> You used: '{result["pattern"]}'
+                </div>
+                """, unsafe_allow_html=True)
             else:
-                st.warning("Please write a response.")
+                st.markdown("""
+                <div class="feedback-box feedback-warning">
+                    ⚠️ Try incorporating one of the repair phrases from above.
+                </div>
+                """, unsafe_allow_html=True)
+
+            if st.button("Try Another Scenario →", type="primary"):
+                st.session_state[repair_checked_key] = False
+                st.session_state[repair_result_key] = None
+                st.rerun()

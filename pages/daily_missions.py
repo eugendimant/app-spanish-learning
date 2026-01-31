@@ -389,28 +389,76 @@ def process_mission_response(mission: dict, response: str, duration: int = 0):
         else:
             st.info("**Hint:** Review the constraints above and make sure your Spanish is correct.")
 
-    if st.button("Submit Retry"):
-        if retry.strip():
-            # Validate Spanish language first
-            lang_info = detect_language(retry)
+    # Track retry submission state
+    retry_submitted_key = "retry_submitted"
+    retry_result_key = "retry_result"
 
-            if lang_info["language"] == "english":
-                st.markdown("""
-                <div class="feedback-box feedback-error">
-                    🌐 <strong>Please write in Spanish!</strong> Your retry appears to be in English.
-                </div>
-                """, unsafe_allow_html=True)
-            elif lang_info["language"] == "mixed" and lang_info.get("confidence", 0) > 0.3:
-                st.markdown("""
-                <div class="feedback-box feedback-warning">
-                    🔀 <strong>Mixed language detected.</strong> Try writing entirely in Spanish.
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                retry_mistakes = check_text_for_mistakes(retry)
-                # Filter out language warnings
-                retry_mistakes = [m for m in retry_mistakes if m.get("tag") != "language"]
-                if len(retry_mistakes) < len(mistakes):
-                    st.success("🎉 Great improvement! You fixed some errors.")
+    if retry_submitted_key not in st.session_state:
+        st.session_state[retry_submitted_key] = False
+        st.session_state[retry_result_key] = None
+
+    if not st.session_state[retry_submitted_key]:
+        if st.button("Submit Retry", type="primary"):
+            if retry.strip():
+                # Validate Spanish language first
+                lang_info = detect_language(retry)
+
+                if lang_info["language"] == "english":
+                    st.session_state[retry_result_key] = {"type": "english"}
+                elif lang_info["language"] == "mixed" and lang_info.get("confidence", 0) > 0.3:
+                    st.session_state[retry_result_key] = {"type": "mixed"}
                 else:
-                    st.info("Keep practicing! Review the corrections above.")
+                    retry_mistakes = check_text_for_mistakes(retry)
+                    # Filter out language warnings
+                    retry_mistakes = [m for m in retry_mistakes if m.get("tag") != "language"]
+                    if len(retry_mistakes) < len(mistakes):
+                        st.session_state[retry_result_key] = {"type": "improved"}
+                    else:
+                        st.session_state[retry_result_key] = {"type": "needs_work"}
+
+                st.session_state[retry_submitted_key] = True
+                st.rerun()
+            else:
+                st.warning("Please enter your improved response.")
+    else:
+        # Show result
+        result = st.session_state[retry_result_key]
+
+        if result["type"] == "english":
+            st.markdown("""
+            <div class="feedback-box feedback-error">
+                🌐 <strong>Please write in Spanish!</strong> Your retry appears to be in English.
+            </div>
+            """, unsafe_allow_html=True)
+        elif result["type"] == "mixed":
+            st.markdown("""
+            <div class="feedback-box feedback-warning">
+                🔀 <strong>Mixed language detected.</strong> Try writing entirely in Spanish.
+            </div>
+            """, unsafe_allow_html=True)
+        elif result["type"] == "improved":
+            st.markdown("""
+            <div class="feedback-box feedback-success">
+                🎉 <strong>Great improvement!</strong> You fixed some errors.
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div class="feedback-box feedback-info">
+                📝 Keep practicing! Review the corrections above.
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Navigation buttons
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Try Again", type="primary"):
+                st.session_state[retry_submitted_key] = False
+                st.session_state[retry_result_key] = None
+                st.rerun()
+        with col2:
+            if st.button("New Mission →"):
+                st.session_state[retry_submitted_key] = False
+                st.session_state[retry_result_key] = None
+                st.session_state.daily_mission_active = False
+                st.rerun()

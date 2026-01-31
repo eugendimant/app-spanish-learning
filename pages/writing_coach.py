@@ -560,7 +560,31 @@ def render_error_pattern_drills():
                 else:
                     st.caption("Submitted. Check that your answer follows the rule above.")
 
-        if st.button("Submit All", type="primary"):
-            record_progress({"grammar_reviewed": 1})
-            log_activity("writing_coach", "error_drill", selected)
-            st.success("Great practice! Keep working on this pattern.")
+        # Track drill completion state
+        drill_submitted_key = f"drill_submitted_{selected}"
+        if drill_submitted_key not in st.session_state:
+            st.session_state[drill_submitted_key] = False
+
+        if not st.session_state[drill_submitted_key]:
+            if st.button("Submit All", type="primary"):
+                record_progress({"grammar_reviewed": 1})
+                log_activity("writing_coach", "error_drill", selected)
+                st.session_state[drill_submitted_key] = True
+                st.rerun()
+        else:
+            st.markdown("""
+            <div class="feedback-box feedback-success">
+                ✅ <strong>Great practice!</strong> Keep working on this pattern.
+            </div>
+            """, unsafe_allow_html=True)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Try Another Drill →", type="primary"):
+                    st.session_state[drill_submitted_key] = False
+                    st.rerun()
+            with col2:
+                if st.button("Back to Writing Coach"):
+                    st.session_state[drill_submitted_key] = False
+                    st.session_state.writing_mode = None
+                    st.rerun()

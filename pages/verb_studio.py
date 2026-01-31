@@ -147,13 +147,19 @@ def render_verb_scenario(scenario: dict, random_mode: bool = False):
             st.session_state.vs_revealed = True
 
     with col2:
-        if not random_mode:
-            if st.button("Next Scenario →", use_container_width=True):
+        # Always show Next button - works for both modes
+        next_label = "Next Scenario →" if not random_mode else "New Scenario →"
+        if st.button(next_label, use_container_width=True):
+            if random_mode:
+                # Get a new random scenario
+                import random
+                st.session_state.vs_current_scenario = random.randint(0, 100)  # Random seed
+            else:
                 st.session_state.vs_current_scenario += 1
-                st.session_state.vs_selected_verb = None
-                st.session_state.vs_explanation = ""
-                st.session_state.vs_revealed = False
-                st.rerun()
+            st.session_state.vs_selected_verb = None
+            st.session_state.vs_explanation = ""
+            st.session_state.vs_revealed = False
+            st.rerun()
 
     # Reveal answer and feedback
     if st.session_state.vs_revealed:

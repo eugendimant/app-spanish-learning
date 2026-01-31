@@ -207,42 +207,81 @@ def render_domain_vocabulary(domain_data: dict, is_stretch: bool = False):
     st.markdown("### Quick Practice")
 
     if lexicon and len(lexicon) > 0:
-        # Use session state to maintain consistent practice item within a session
+        # Use session state to maintain consistent practice item and track answer state
         practice_key = f"td_practice_item_{domain_name}"
-        if practice_key not in st.session_state or st.session_state.get(f"{practice_key}_changed", False):
+        checked_key = f"td_practice_checked_{domain_name}"
+        result_key = f"td_practice_result_{domain_name}"
+
+        # Initialize practice item if needed
+        if practice_key not in st.session_state:
             st.session_state[practice_key] = random.choice(lexicon)
-            st.session_state[f"{practice_key}_changed"] = False
+        if checked_key not in st.session_state:
+            st.session_state[checked_key] = False
+            st.session_state[result_key] = None
 
         practice_item = st.session_state[practice_key]
 
         st.markdown(f"**Fill in the blank with the correct word:**")
-        st.markdown(f"Context: _{practice_item.get('contexts', ['Use the word in a sentence'])[0] if practice_item.get('contexts') else 'Use this word appropriately.'}_")
+
+        # Show context
+        context = practice_item.get('contexts', ['Use this word appropriately.'])[0] if practice_item.get('contexts') else 'Use this word appropriately.'
+        st.markdown(f"Context: _{context}_")
 
         user_answer = st.text_input("Your answer:", key=f"practice_{domain_name}")
 
-        # Add hint button
+        # Show hint button (always available)
         if st.button("💡 Hint in English", key=f"hint_{domain_name}"):
             st.info(f"**Hint:** The word means: {practice_item.get('meaning', 'Check the context for clues')}")
 
-        if st.button("Check Answer", key=f"check_{domain_name}"):
-            if not user_answer.strip():
-                st.warning("Please enter your answer.")
-            else:
-                # Validate Spanish language first
-                lang_info = detect_language(user_answer)
-
-                if lang_info["language"] == "english" and len(user_answer.split()) > 1:
-                    st.markdown("""
-                    <div class="feedback-box feedback-error">
-                        🌐 <strong>Please answer in Spanish!</strong> Your answer appears to be in English.
-                        Use the "Hint in English" button if you need help.
-                    </div>
-                    """, unsafe_allow_html=True)
-                elif user_answer.lower().strip() == practice_item["term"].lower():
-                    st.success("🎉 Correct! Great job!")
-                    record_progress({"vocab_reviewed": 1})
-                    # Mark to get a new practice item next time
-                    st.session_state[f"{practice_key}_changed"] = True
+        # Check/Next button logic based on state
+        if not st.session_state[checked_key]:
+            # Haven't checked yet - show Check button
+            if st.button("Check Answer", type="primary", key=f"check_{domain_name}"):
+                if not user_answer.strip():
+                    st.warning("Please enter your answer.")
                 else:
-                    st.error(f"Not quite. The answer was: **{practice_item['term']}**")
-                    st.markdown(f"**Meaning:** {practice_item['meaning']}")
+                    # Validate Spanish language first
+                    lang_info = detect_language(user_answer)
+
+                    if lang_info["language"] == "english" and len(user_answer.split()) > 1:
+                        st.session_state[result_key] = {"type": "english_detected"}
+                    elif user_answer.lower().strip() == practice_item["term"].lower():
+                        st.session_state[result_key] = {"type": "correct"}
+                        record_progress({"vocab_reviewed": 1})
+                    else:
+                        st.session_state[result_key] = {"type": "incorrect", "correct_answer": practice_item["term"]}
+
+                    st.session_state[checked_key] = True
+                    st.rerun()
+        else:
+            # Already checked - show result and Next button
+            result = st.session_state[result_key]
+
+            if result["type"] == "english_detected":
+                st.markdown("""
+                <div class="feedback-box feedback-error">
+                    🌐 <strong>Please answer in Spanish!</strong> Your answer appears to be in English.
+                    Use the "Hint in English" button if you need help.
+                </div>
+                """, unsafe_allow_html=True)
+            elif result["type"] == "correct":
+                st.markdown("""
+                <div class="feedback-box feedback-success">
+                    🎉 <strong>Correct!</strong> Great job!
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="feedback-box feedback-error">
+                    ❌ Not quite. The answer was: <strong>{result['correct_answer']}</strong>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown(f"**Meaning:** {practice_item['meaning']}")
+
+            # Always show Next button after checking
+            if st.button("Next Word →", type="primary", key=f"next_{domain_name}"):
+                # Get a new practice item
+                st.session_state[practice_key] = random.choice(lexicon)
+                st.session_state[checked_key] = False
+                st.session_state[result_key] = None
+                st.rerun()
