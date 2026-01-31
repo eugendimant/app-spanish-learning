@@ -271,6 +271,7 @@ def render_sidebar():
             "🎤 Daily Missions": "Daily Missions",
             "💬 Conversation": "Conversation",
             "📝 Writing Coach": "Writing Coach",
+            "🌎 Dialects": "Dialects",
             "🧬 My Fingerprint": "Fingerprint",
             "🔄 Review Hub": "Review",
             "📊 Error Notebook": "Error Notebook",
@@ -558,6 +559,7 @@ from pages.content_ingest import render_content_ingest_page
 from pages.settings import render_settings_page
 from pages.fingerprint_dashboard import render_fingerprint_dashboard
 from pages.writing_coach import render_writing_coach_page
+from pages.dialect_navigator import render_dialect_navigator_page
 
 
 def main():
@@ -596,6 +598,8 @@ def main():
         render_conversation_page()
     elif page == "Writing Coach":
         render_writing_coach_page()
+    elif page == "Dialects":
+        render_dialect_navigator_page()
     elif page == "Fingerprint":
         render_fingerprint_dashboard()
     elif page == "Review":
