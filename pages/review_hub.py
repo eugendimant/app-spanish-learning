@@ -155,41 +155,67 @@ def render_microdrill():
 
     elif step == 3:
         # Step 4: Final quick recall
-        st.markdown("### Step 4: Quick Recall")
-        st.markdown("One more time - type the **correct form**:")
+        # Track if finished
+        finished_key = "microdrill_finished"
+        if finished_key not in st.session_state:
+            st.session_state[finished_key] = False
 
-        user_final = st.text_input("Final answer:", key="microdrill_final")
+        if not st.session_state[finished_key]:
+            st.markdown("### Step 4: Quick Recall")
+            st.markdown("One more time - type the **correct form**:")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Check & Finish", type="primary", use_container_width=True):
-                if user_final.strip().lower() == correct_answer.lower():
-                    st.session_state.microdrill_correct += 1
-                    st.balloons()
-                    st.success(f"Excellent! You got {st.session_state.microdrill_correct}/3 correct.")
-                else:
-                    st.warning(f"The correct answer was: **{correct_answer}**")
-                    st.info(f"You got {st.session_state.microdrill_correct}/3 in this drill.")
+            user_final = st.text_input("Final answer:", key="microdrill_final")
 
-                # Show completion
-                st.markdown("---")
-                st.markdown("### Micro-drill complete!")
-                st.caption("This pattern has been reinforced. You'll see it again in review.")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Check & Finish", type="primary", use_container_width=True):
+                    if user_final.strip().lower() == correct_answer.lower():
+                        st.session_state.microdrill_correct += 1
+                        st.session_state[finished_key] = True
+                        st.session_state.microdrill_result = "correct"
+                    else:
+                        st.session_state[finished_key] = True
+                        st.session_state.microdrill_result = "incorrect"
+                    st.rerun()
 
-                if st.button("Return to Review", use_container_width=True):
-                    # Clean up
+            with col2:
+                if st.button("Skip & Return", use_container_width=True):
                     st.session_state.microdrill_active = False
                     st.session_state.microdrill_pattern = None
                     st.session_state.microdrill_step = 0
                     st.session_state.microdrill_correct = 0
+                    st.session_state.pop(finished_key, None)
                     st.rerun()
+        else:
+            # Show completion screen
+            result = st.session_state.get("microdrill_result", "incorrect")
 
-        with col2:
-            if st.button("Skip & Return", use_container_width=True):
+            if result == "correct":
+                st.balloons()
+                st.markdown("""
+                <div class="feedback-box feedback-success">
+                    🎉 <strong>Excellent!</strong> You completed the micro-drill successfully!
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="feedback-box feedback-warning">
+                    <strong>Almost there!</strong> The correct answer was: <strong>{correct_answer}</strong>
+                </div>
+                """, unsafe_allow_html=True)
+
+            st.markdown(f"### Micro-drill complete!")
+            st.markdown(f"**Score:** {st.session_state.microdrill_correct}/3 correct")
+            st.caption("This pattern has been reinforced. You'll see it again in review.")
+
+            if st.button("Return to Review →", type="primary", use_container_width=True):
+                # Clean up all state
                 st.session_state.microdrill_active = False
                 st.session_state.microdrill_pattern = None
                 st.session_state.microdrill_step = 0
                 st.session_state.microdrill_correct = 0
+                st.session_state.pop(finished_key, None)
+                st.session_state.pop("microdrill_result", None)
                 st.rerun()
 
 
