@@ -911,3 +911,396 @@ PLACEMENT_QUESTIONS = [
         "skill": "subjunctive",
     },
 ]
+
+# ============== PRAGMATICS PATTERNS ==============
+
+PRAGMATICS_PATTERNS = {
+    "greetings": {
+        "formal": [
+            {"phrase": "Buenos días, ¿en qué puedo ayudarle?", "context": "professional", "dialect": "neutral"},
+            {"phrase": "Buenas tardes, encantado/a de conocerle.", "context": "introductions", "dialect": "neutral"},
+            {"phrase": "¿Qué tal? ¿Cómo ha ido el fin de semana?", "context": "office_small_talk", "dialect": "neutral"},
+        ],
+        "informal": [
+            {"phrase": "¡Hola! ¿Qué tal?", "context": "friends", "dialect": "neutral"},
+            {"phrase": "¿Qué hay? ¿Cómo estás?", "context": "casual", "dialect": "neutral"},
+            {"phrase": "¡Buenas! ¿Todo bien?", "context": "casual", "dialect": "Spain"},
+            {"phrase": "¡Hola, che! ¿Cómo andás?", "context": "casual", "dialect": "Argentina"},
+            {"phrase": "¿Qué onda?", "context": "casual", "dialect": "Mexico"},
+        ],
+    },
+    "softeners": {
+        "hedging": [
+            {"phrase": "Me parece que...", "use": "expressing opinion tentatively", "intensity": "medium"},
+            {"phrase": "Quizá/Tal vez...", "use": "suggesting possibility", "intensity": "low"},
+            {"phrase": "Podría ser que...", "use": "conditional possibility", "intensity": "low"},
+            {"phrase": "A mi modo de ver...", "use": "personal perspective", "intensity": "medium"},
+            {"phrase": "Diría que...", "use": "cautious assertion", "intensity": "medium"},
+            {"phrase": "No sé si...", "use": "introducing uncertainty", "intensity": "low"},
+        ],
+        "requests": [
+            {"phrase": "¿Te importaría...?", "use": "polite informal request", "intensity": "low"},
+            {"phrase": "¿Sería posible...?", "use": "formal polite request", "intensity": "low"},
+            {"phrase": "¿Podrías...?", "use": "informal request", "intensity": "medium"},
+            {"phrase": "¿Le importaría...?", "use": "formal request", "intensity": "low"},
+            {"phrase": "Si no es mucha molestia...", "use": "very polite preface", "intensity": "low"},
+            {"phrase": "Cuando puedas...", "use": "non-urgent request", "intensity": "low"},
+        ],
+    },
+    "backchanneling": {
+        "understanding": [
+            {"phrase": "Claro", "use": "showing understanding", "frequency": "very_common"},
+            {"phrase": "Ajá", "use": "minimal response", "frequency": "very_common"},
+            {"phrase": "Ya", "use": "acknowledgment", "frequency": "common"},
+            {"phrase": "Entiendo", "use": "explicit understanding", "frequency": "common"},
+            {"phrase": "Vale", "use": "agreement/understanding", "frequency": "common", "dialect": "Spain"},
+            {"phrase": "Ok", "use": "casual acknowledgment", "frequency": "common"},
+            {"phrase": "Sí, sí", "use": "emphatic agreement", "frequency": "common"},
+        ],
+        "interest": [
+            {"phrase": "¿En serio?", "use": "expressing surprise", "frequency": "common"},
+            {"phrase": "¡No me digas!", "use": "expressing disbelief", "frequency": "common"},
+            {"phrase": "¿De verdad?", "use": "seeking confirmation", "frequency": "common"},
+            {"phrase": "¡Qué interesante!", "use": "showing interest", "frequency": "common"},
+            {"phrase": "¿Y qué pasó?", "use": "encouraging continuation", "frequency": "common"},
+        ],
+    },
+    "repair_skills": {
+        "asking_clarification": [
+            {"phrase": "Perdón, no entendí. ¿Puede repetirlo?", "register": "formal"},
+            {"phrase": "¿Puede hablar más despacio, por favor?", "register": "formal"},
+            {"phrase": "¿Cómo dice? No le he oído bien.", "register": "formal"},
+            {"phrase": "Perdona, ¿qué has dicho?", "register": "informal"},
+            {"phrase": "¿Me lo puedes explicar de otra forma?", "register": "informal"},
+            {"phrase": "No me queda claro. ¿A qué te refieres con...?", "register": "neutral"},
+        ],
+        "self_correction": [
+            {"phrase": "Quise decir...", "use": "correcting yourself"},
+            {"phrase": "Me refería a...", "use": "clarifying meaning"},
+            {"phrase": "O sea...", "use": "rephrasing"},
+            {"phrase": "Es decir...", "use": "formal rephrasing"},
+            {"phrase": "Bueno, más bien...", "use": "softening correction"},
+            {"phrase": "Perdón, me he expresado mal.", "use": "acknowledging error"},
+        ],
+        "confirming_understanding": [
+            {"phrase": "Entonces, lo que dices es que...", "use": "paraphrasing"},
+            {"phrase": "Si he entendido bien...", "use": "checking comprehension"},
+            {"phrase": "¿Quieres decir que...?", "use": "confirming meaning"},
+            {"phrase": "A ver si lo he entendido...", "use": "summarizing"},
+            {"phrase": "Resumiendo...", "use": "formal summary"},
+        ],
+    },
+    "turn_closers": {
+        "informal": [
+            {"phrase": "Bueno, te dejo.", "use": "ending conversation"},
+            {"phrase": "Venga, hablamos.", "use": "ending casually", "dialect": "Spain"},
+            {"phrase": "Nos vemos.", "use": "saying goodbye"},
+            {"phrase": "Hasta luego.", "use": "neutral goodbye"},
+            {"phrase": "Cuídate.", "use": "caring goodbye"},
+        ],
+        "formal": [
+            {"phrase": "Ha sido un placer hablar con usted.", "use": "polite closing"},
+            {"phrase": "Gracias por su tiempo.", "use": "acknowledging time"},
+            {"phrase": "Quedamos en contacto.", "use": "maintaining relationship"},
+            {"phrase": "Le mantengo informado/a.", "use": "promising follow-up"},
+            {"phrase": "Sin más, me despido atentamente.", "use": "email closing"},
+        ],
+    },
+    "disagreement": {
+        "polite": [
+            {"phrase": "Entiendo tu punto, pero...", "intensity": "low"},
+            {"phrase": "Comprendo lo que dices, aunque...", "intensity": "low"},
+            {"phrase": "No estoy del todo de acuerdo.", "intensity": "medium"},
+            {"phrase": "Veo lo que quieres decir, sin embargo...", "intensity": "low"},
+            {"phrase": "Respeto tu opinión, pero yo creo que...", "intensity": "medium"},
+        ],
+        "direct": [
+            {"phrase": "No comparto esa visión.", "intensity": "medium"},
+            {"phrase": "No estoy de acuerdo.", "intensity": "high"},
+            {"phrase": "Eso no es exactamente así.", "intensity": "medium"},
+            {"phrase": "Me temo que no.", "intensity": "medium"},
+        ],
+    },
+    "topic_changers": [
+        {"phrase": "Por cierto...", "use": "introducing related topic"},
+        {"phrase": "Cambiando de tema...", "use": "explicit change"},
+        {"phrase": "A propósito...", "use": "introducing relevant aside"},
+        {"phrase": "Antes de que se me olvide...", "use": "remembering something"},
+        {"phrase": "Oye, y hablando de otra cosa...", "use": "casual change"},
+    ],
+}
+
+# ============== PRAGMATICS WARNINGS ==============
+
+PRAGMATICS_WARNINGS = [
+    {
+        "pattern": "Yo quiero que tú...",
+        "issue": "too_direct",
+        "explanation": "Usar 'quiero que' directamente puede sonar demandante. Mejor usar formas indirectas.",
+        "alternatives": ["¿Te importaría...?", "¿Podrías...?", "Me gustaría que..."],
+        "example_bad": "Quiero que me lo envíes hoy.",
+        "example_good": "¿Te importaría enviármelo hoy?",
+    },
+    {
+        "pattern": "Necesito esto para ayer",
+        "issue": "calque_aggression",
+        "explanation": "Esta frase puede sonar agresiva en español. Es un calco del inglés 'I needed this yesterday'.",
+        "alternatives": ["Esto es urgente.", "Necesito esto lo antes posible.", "¿Podría ser prioritario?"],
+        "example_bad": "Lo necesitaba para ayer.",
+        "example_good": "Es bastante urgente, ¿podemos priorizarlo?",
+    },
+    {
+        "pattern": "Tú debes/Tienes que",
+        "issue": "too_imposing",
+        "explanation": "En muchos contextos, 'debes' o 'tienes que' puede sonar autoritario.",
+        "alternatives": ["Sería conveniente que...", "Te recomendaría...", "Quizá podrías..."],
+        "example_bad": "Tienes que entregar esto mañana.",
+        "example_good": "Sería importante tenerlo para mañana, si es posible.",
+    },
+    {
+        "pattern": "No problem",
+        "issue": "false_friend_register",
+        "explanation": "'No hay problema' está bien, pero mejor usar expresiones más naturales.",
+        "alternatives": ["De nada", "No hay de qué", "Con gusto", "Faltaría más"],
+        "example_bad": "No problema.",
+        "example_good": "De nada, con mucho gusto.",
+    },
+]
+
+# ============== ENHANCED CONVERSATION SCENARIOS ==============
+
+NEGOTIATION_SCENARIOS = [
+    {
+        "title": "Reservar cita de peluquería - completo",
+        "brief": "El peluquero está completo pero necesitas el corte esta semana.",
+        "objectives": [
+            {"type": "confirmation", "target": "confirm_alternative_time", "description": "Confirmar hora alternativa"},
+            {"type": "confirmation", "target": "confirm_price", "description": "Confirmar precio"},
+            {"type": "clarification", "target": "ask_duration", "description": "Preguntar duración"},
+            {"type": "closure", "target": "natural_goodbye", "description": "Despedida natural"},
+        ],
+        "partner_responses": [
+            {"trigger": "greeting", "response": "Buenos días, ¿en qué puedo ayudarle?"},
+            {"trigger": "request_appointment", "response": "Uy, esta semana estamos completos. Solo me queda un hueco el viernes a las 8 de la mañana."},
+            {"trigger": "negotiate_time", "response": "Déjeme ver... Podría hacerle un hueco el jueves a las 14:00 si no le importa la hora de la comida."},
+            {"trigger": "ask_price", "response": "El corte son 18 euros, y si quiere lavado son 22."},
+            {"trigger": "confirm", "response": "Perfecto, le apunto para el jueves a las 14:00. ¿A qué nombre?"},
+            {"trigger": "goodbye", "response": "Muy bien, nos vemos el jueves entonces. ¡Hasta luego!"},
+        ],
+        "scoring_rubric": {
+            "confirmed_details": 25,
+            "used_politeness": 20,
+            "paraphrased": 15,
+            "natural_closure": 20,
+            "negotiated_alternative": 20,
+        },
+    },
+    {
+        "title": "Reclamación en tienda - producto defectuoso",
+        "brief": "Compraste un dispositivo que dejó de funcionar. Quieres devolución o cambio.",
+        "objectives": [
+            {"type": "explanation", "target": "explain_problem", "description": "Explicar el problema claramente"},
+            {"type": "request", "target": "request_solution", "description": "Pedir solución específica"},
+            {"type": "confirmation", "target": "confirm_process", "description": "Confirmar proceso de devolución"},
+            {"type": "documentation", "target": "get_reference", "description": "Obtener número de referencia"},
+        ],
+        "partner_responses": [
+            {"trigger": "greeting", "response": "Buenos días, bienvenido a atención al cliente. ¿En qué puedo ayudarle?"},
+            {"trigger": "explain_problem", "response": "Entiendo. ¿Tiene el ticket de compra? ¿Cuándo lo compró?"},
+            {"trigger": "provide_details", "response": "Vale, déjeme comprobar en el sistema... Sí, veo la compra. Tiene dos opciones: devolución del importe o cambio por otro igual."},
+            {"trigger": "request_refund", "response": "De acuerdo, procesamos la devolución. Tardará 3-5 días hábiles en reflejarse en su cuenta."},
+            {"trigger": "ask_reference", "response": "Su número de referencia es el 2024-7834. Guárdelo por si necesita hacer seguimiento."},
+            {"trigger": "goodbye", "response": "Gracias por su paciencia. Sentimos las molestias. Hasta luego."},
+        ],
+        "scoring_rubric": {
+            "clear_explanation": 25,
+            "polite_but_firm": 20,
+            "got_solution": 25,
+            "documented": 15,
+            "natural_closure": 15,
+        },
+    },
+]
+
+# ============== WRITING COACH TEMPLATES ==============
+
+WRITING_COACH_TEMPLATES = {
+    "error_feedback": {
+        "gender_agreement": {
+            "rule": "Los adjetivos deben concordar en género con el sustantivo al que modifican.",
+            "examples": [
+                {"wrong": "la mesa blanco", "correct": "la mesa blanca"},
+                {"wrong": "el problema nueva", "correct": "el problema nuevo"},
+            ],
+            "practice_prompts": [
+                "Escribe una oración con 'decisión' y un adjetivo.",
+                "Describe 'el sistema' con dos adjetivos.",
+            ],
+        },
+        "ser_estar": {
+            "rule": "Usa 'ser' para características permanentes/identidad y 'estar' para estados/ubicación.",
+            "examples": [
+                {"wrong": "El café está caliente por naturaleza", "correct": "El café es una bebida caliente"},
+                {"wrong": "La oficina es en el centro", "correct": "La oficina está en el centro"},
+            ],
+            "practice_prompts": [
+                "Describe dónde está tu oficina y cómo es.",
+                "Compara cómo eres normalmente vs. cómo estás hoy.",
+            ],
+        },
+        "por_para": {
+            "rule": "Usa 'para' para propósito/destino y 'por' para causa/intercambio/duración.",
+            "examples": [
+                {"wrong": "Estudio por aprobar", "correct": "Estudio para aprobar"},
+                {"wrong": "Gracias para ayudarme", "correct": "Gracias por ayudarme"},
+            ],
+            "practice_prompts": [
+                "Explica para qué estudias español.",
+                "Di por qué llegaste tarde.",
+            ],
+        },
+        "subjunctive_triggers": {
+            "rule": "El subjuntivo se usa después de expresiones de deseo, duda, emoción y ciertas conjunciones.",
+            "examples": [
+                {"wrong": "Quiero que vienes", "correct": "Quiero que vengas"},
+                {"wrong": "Cuando llegas, avísame", "correct": "Cuando llegues, avísame"},
+            ],
+            "practice_prompts": [
+                "Expresa algo que quieres que alguien haga.",
+                "Escribe qué harás cuando termines el proyecto.",
+            ],
+        },
+    },
+    "tone_rewrites": {
+        "formal_to_informal": {
+            "instruction": "Reescribe el mensaje para un colega cercano.",
+            "example_formal": "Le agradecería que me enviara los documentos a la mayor brevedad posible.",
+            "example_informal": "Oye, ¿me puedes pasar los documentos cuando puedas?",
+        },
+        "informal_to_formal": {
+            "instruction": "Reescribe el mensaje para un cliente importante.",
+            "example_informal": "Oye, el proyecto va retrasado.",
+            "example_formal": "Le informo de que el proyecto ha sufrido un retraso. Estamos trabajando para minimizar el impacto.",
+        },
+        "direct_to_polite": {
+            "instruction": "Suaviza el mensaje manteniendo el contenido.",
+            "example_direct": "Necesito que lo hagas hoy.",
+            "example_polite": "¿Sería posible tenerlo para hoy? Te lo agradecería mucho.",
+        },
+    },
+    "constraint_rewrites": [
+        {
+            "instruction": "Reescribe usando el imperfecto en lugar del pretérito.",
+            "original": "Ayer fui al mercado y compré fruta.",
+            "constraint": "imperfecto",
+            "example": "Antes iba al mercado y compraba fruta.",
+        },
+        {
+            "instruction": "Reescribe usando el condicional para ser más cortés.",
+            "original": "Quiero que me ayudes.",
+            "constraint": "conditional",
+            "example": "¿Podrías ayudarme? / Me gustaría que me ayudaras.",
+        },
+        {
+            "instruction": "Reescribe usando voz pasiva.",
+            "original": "El equipo completó el proyecto.",
+            "constraint": "passive",
+            "example": "El proyecto fue completado por el equipo.",
+        },
+    ],
+}
+
+# ============== RULE BOUNDARY EXPLANATIONS ==============
+
+RULE_BOUNDARIES = {
+    "preterito_imperfecto": {
+        "rule": "Pretérito: acciones puntuales/completadas. Imperfecto: contexto/descripción/hábito.",
+        "boundary_cases": [
+            {
+                "case": "Interruption pattern",
+                "explanation": "Imperfecto para acción en curso, pretérito para la interrupción.",
+                "example": "Mientras estudiaba (imperfecto - fondo), llamaron a la puerta (pretérito - interrupción).",
+            },
+            {
+                "case": "Conocer a alguien",
+                "explanation": "'Conocí' = met for first time. 'Conocía' = I knew/used to know.",
+                "example": "Conocí a María ayer (first meeting) vs. Ya conocía a María (prior knowledge).",
+            },
+            {
+                "case": "Saber algo",
+                "explanation": "'Supe' = found out. 'Sabía' = already knew.",
+                "example": "Supe la verdad ayer (discovery) vs. Ya sabía la verdad (prior knowledge).",
+            },
+        ],
+    },
+    "ser_estar": {
+        "rule": "Ser: identidad, origen, material, tiempo, eventos. Estar: ubicación, estados temporales, emociones.",
+        "boundary_cases": [
+            {
+                "case": "Adjectives that change meaning",
+                "explanation": "Algunos adjetivos cambian significado con ser vs estar.",
+                "example": "Es listo (clever) vs. Está listo (ready). Es malo (evil) vs. Está malo (sick).",
+            },
+            {
+                "case": "Events vs. locations",
+                "explanation": "Los eventos usan 'ser' aunque tengan lugar en un sitio.",
+                "example": "La fiesta es en mi casa (event) vs. Mi casa está en el centro (location).",
+            },
+        ],
+    },
+    "por_para": {
+        "rule": "Para: propósito, destino, deadline, recipient. Por: causa, medio, intercambio, duración.",
+        "boundary_cases": [
+            {
+                "case": "Movement through vs. toward",
+                "explanation": "'Por' indica movimiento a través de, 'para' indica destino.",
+                "example": "Pasé por el parque (through) vs. Voy para el parque (toward/destination).",
+            },
+            {
+                "case": "Working for someone",
+                "explanation": "'Para' = employed by. 'Por' = on behalf of/in place of.",
+                "example": "Trabajo para Google (employer) vs. Trabajo por mi hermano hoy (replacing him).",
+            },
+        ],
+    },
+}
+
+# ============== DIALECT CONVERTER ==============
+
+DIALECT_CONVERTER = {
+    "greetings": {
+        "neutral": "Hola, ¿cómo estás?",
+        "Spain": "¡Hola! ¿Qué tal?",
+        "Mexico": "¡Hola! ¿Cómo estás? / ¿Qué onda?",
+        "Argentina": "¡Hola! ¿Cómo andás?",
+        "Colombia": "¡Hola! ¿Cómo está? / ¿Bien o qué?",
+    },
+    "affirmative": {
+        "neutral": "Sí, de acuerdo.",
+        "Spain": "Vale, perfecto.",
+        "Mexico": "Órale, está bien.",
+        "Argentina": "Dale, bárbaro.",
+        "Colombia": "Listo, de una.",
+    },
+    "expressing_cool": {
+        "neutral": "Eso es muy bueno.",
+        "Spain": "Eso mola mucho. / ¡Qué guay!",
+        "Mexico": "¡Qué padre! / ¡Está chido!",
+        "Argentina": "¡Qué copado! / ¡Es genial!",
+        "Colombia": "¡Qué chévere! / ¡Bacano!",
+    },
+    "work_casual": {
+        "neutral": "Tengo mucho trabajo.",
+        "Spain": "Tengo un montón de curro.",
+        "Mexico": "Tengo un chingo de chamba.",
+        "Argentina": "Tengo un montón de laburo.",
+        "Colombia": "Tengo mucho camello.",
+    },
+    "you_informal": {
+        "neutral": "¿Tú qué opinas?",
+        "Spain": "¿Tú qué opinas?",
+        "Mexico": "¿Tú qué opinas?",
+        "Argentina": "¿Vos qué opinás?",
+        "Colombia": "¿Usted qué opina? / ¿Tú qué opinas?",
+    },
+}

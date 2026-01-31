@@ -270,6 +270,8 @@ def render_sidebar():
             "✍️ Mistake Catcher": "Mistake Catcher",
             "🎤 Daily Missions": "Daily Missions",
             "💬 Conversation": "Conversation",
+            "📝 Writing Coach": "Writing Coach",
+            "🧬 My Fingerprint": "Fingerprint",
             "🔄 Review Hub": "Review",
             "📊 Error Notebook": "Error Notebook",
             "📥 Content Ingest": "Content Ingest",
@@ -554,6 +556,8 @@ from pages.review_hub import render_review_hub_page
 from pages.error_notebook import render_error_notebook_page
 from pages.content_ingest import render_content_ingest_page
 from pages.settings import render_settings_page
+from pages.fingerprint_dashboard import render_fingerprint_dashboard
+from pages.writing_coach import render_writing_coach_page
 
 
 def main():
@@ -590,6 +594,10 @@ def main():
         render_daily_missions_page()
     elif page == "Conversation":
         render_conversation_page()
+    elif page == "Writing Coach":
+        render_writing_coach_page()
+    elif page == "Fingerprint":
+        render_fingerprint_dashboard()
     elif page == "Review":
         render_review_hub_page()
     elif page == "Error Notebook":
