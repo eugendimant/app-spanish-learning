@@ -70,7 +70,8 @@ def render_scenario_selection():
     st.markdown("""
     <div class="card-muted">
         Select a real-world scenario to practice. Each scenario has hidden language targets
-        you'll need to achieve during the conversation.
+        you'll need to achieve during the conversation. Pay attention to the formality and
+        relationship context - they affect which register to use.
     </div>
     """, unsafe_allow_html=True)
 
@@ -79,10 +80,32 @@ def render_scenario_selection():
 
     for i, scenario in enumerate(CONVERSATION_SCENARIOS):
         with cols[i % 2]:
+            # Formality badge color
+            formality = scenario.get("formality", "neutral")
+            formality_color = {
+                "formal": "primary",
+                "neutral": "warning",
+                "informal": "secondary"
+            }.get(formality, "muted")
+
+            formality_icon = {
+                "formal": "👔",
+                "neutral": "🤝",
+                "informal": "😊"
+            }.get(formality, "💬")
+
+            relationship_label = scenario.get("relationship_label", "Unknown")
+
             st.markdown(f"""
             <div class="card" style="margin-bottom: 1rem;">
-                <h4>{scenario['title']}</h4>
-                <p style="color: var(--text-muted);">{scenario['brief']}</p>
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                    <h4 style="margin: 0;">{scenario['title']}</h4>
+                    <span class="pill pill-{formality_color}">{formality_icon} {formality.title()}</span>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 0.75rem;">{scenario['brief']}</p>
+                <div style="background: rgba(99, 102, 241, 0.1); padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.85rem;">
+                    <strong>Speaking with:</strong> {relationship_label}
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -122,6 +145,24 @@ def render_conversation():
             st.session_state.conv_scenario = None
             st.session_state.conv_messages = []
             st.rerun()
+
+    # Formality context banner - always visible
+    formality = scenario.get("formality", "neutral")
+    relationship_label = scenario.get("relationship_label", "")
+    register_tips = scenario.get("register_tips", "")
+
+    formality_icon = {"formal": "👔", "neutral": "🤝", "informal": "😊"}.get(formality, "💬")
+    formality_bg = {"formal": "rgba(99, 102, 241, 0.15)", "neutral": "rgba(251, 191, 36, 0.15)", "informal": "rgba(34, 197, 94, 0.15)"}.get(formality, "rgba(100, 116, 139, 0.15)")
+
+    st.markdown(f"""
+    <div style="background: {formality_bg}; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 1.5rem;">{formality_icon}</span>
+        <div>
+            <strong>{formality.title()} Register</strong> — {relationship_label}
+            <br><span style="font-size: 0.85rem; opacity: 0.8;">{register_tips}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.divider()
 

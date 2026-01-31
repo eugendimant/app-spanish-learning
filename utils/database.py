@@ -84,6 +84,8 @@ def init_db() -> None:
                 dialect_preference TEXT DEFAULT 'Spain',
                 avatar_color TEXT DEFAULT '#6366f1',
                 is_active INTEGER DEFAULT 0,
+                focus_mode INTEGER DEFAULT 0,
+                accent_tolerance INTEGER DEFAULT 0,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
@@ -244,6 +246,21 @@ def init_db() -> None:
             )
         """)
 
+        # Issue reports for user feedback on corrections
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS issue_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                profile_id INTEGER DEFAULT 1,
+                report_type TEXT NOT NULL,
+                context TEXT,
+                user_answer TEXT,
+                expected_answer TEXT,
+                user_comment TEXT,
+                status TEXT DEFAULT 'pending',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         # Legacy user_profile table (kept for backwards compatibility)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS user_profile (
@@ -365,30 +382,62 @@ def update_profile(profile_id: int, profile: dict) -> None:
     """Update a profile."""
     try:
         with get_connection() as conn:
-            conn.execute("""
-                UPDATE profiles SET
-                    name = ?,
-                    level = ?,
-                    weekly_goal = ?,
-                    placement_completed = ?,
-                    placement_score = ?,
-                    focus_areas = ?,
-                    dialect_preference = ?,
-                    avatar_color = ?,
-                    updated_at = ?
-                WHERE id = ?
-            """, (
-                profile.get("name", ""),
-                profile.get("level", "C1"),
-                profile.get("weekly_goal", 6),
-                profile.get("placement_completed", 0),
-                profile.get("placement_score"),
-                json.dumps(profile.get("focus_areas", [])),
-                profile.get("dialect_preference", "Spain"),
-                profile.get("avatar_color", "#6366f1"),
-                datetime.now().isoformat(),
-                profile_id
-            ))
+            # Try to update with new columns first
+            try:
+                conn.execute("""
+                    UPDATE profiles SET
+                        name = ?,
+                        level = ?,
+                        weekly_goal = ?,
+                        placement_completed = ?,
+                        placement_score = ?,
+                        focus_areas = ?,
+                        dialect_preference = ?,
+                        avatar_color = ?,
+                        focus_mode = ?,
+                        accent_tolerance = ?,
+                        updated_at = ?
+                    WHERE id = ?
+                """, (
+                    profile.get("name", ""),
+                    profile.get("level", "C1"),
+                    profile.get("weekly_goal", 6),
+                    profile.get("placement_completed", 0),
+                    profile.get("placement_score"),
+                    json.dumps(profile.get("focus_areas", [])),
+                    profile.get("dialect_preference", "Spain"),
+                    profile.get("avatar_color", "#6366f1"),
+                    profile.get("focus_mode", 0),
+                    profile.get("accent_tolerance", 0),
+                    datetime.now().isoformat(),
+                    profile_id
+                ))
+            except sqlite3.OperationalError:
+                # Fall back to old columns if new ones don't exist
+                conn.execute("""
+                    UPDATE profiles SET
+                        name = ?,
+                        level = ?,
+                        weekly_goal = ?,
+                        placement_completed = ?,
+                        placement_score = ?,
+                        focus_areas = ?,
+                        dialect_preference = ?,
+                        avatar_color = ?,
+                        updated_at = ?
+                    WHERE id = ?
+                """, (
+                    profile.get("name", ""),
+                    profile.get("level", "C1"),
+                    profile.get("weekly_goal", 6),
+                    profile.get("placement_completed", 0),
+                    profile.get("placement_score"),
+                    json.dumps(profile.get("focus_areas", [])),
+                    profile.get("dialect_preference", "Spain"),
+                    profile.get("avatar_color", "#6366f1"),
+                    datetime.now().isoformat(),
+                    profile_id
+                ))
             conn.commit()
     except Exception as e:
         logger.warning(f"Profile update failed for ID {profile_id}: {e}")
@@ -1535,3 +1584,56 @@ def get_conversation_outcome_stats() -> dict:
             } for row in rows}
     except Exception:
         return {}
+
+
+# ============== Issue Report Operations ==============
+
+def save_issue_report(report_type: str, context: str, user_answer: str = "",
+                      expected_answer: str = "", user_comment: str = "") -> bool:
+    """Save an issue report from user feedback.
+
+    Args:
+        report_type: Type of issue (wrong_answer, unfair_marking, content_error, etc.)
+        context: The question or card content
+        user_answer: What the user answered (if applicable)
+        expected_answer: What the system expected (if applicable)
+        user_comment: User's explanation of the issue
+
+    Returns:
+        True if saved successfully, False otherwise
+    """
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            conn.execute("""
+                INSERT INTO issue_reports
+                (profile_id, report_type, context, user_answer, expected_answer, user_comment)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (profile_id, report_type, context, user_answer, expected_answer, user_comment))
+            conn.commit()
+            return True
+    except Exception as e:
+        logger.warning(f"Issue report save failed: {e}")
+        return False
+
+
+def get_issue_reports(status: str = None) -> list:
+    """Get issue reports, optionally filtered by status."""
+    profile_id = get_active_profile_id()
+    try:
+        with get_connection() as conn:
+            if status:
+                rows = conn.execute("""
+                    SELECT * FROM issue_reports
+                    WHERE profile_id = ? AND status = ?
+                    ORDER BY created_at DESC
+                """, (profile_id, status)).fetchall()
+            else:
+                rows = conn.execute("""
+                    SELECT * FROM issue_reports
+                    WHERE profile_id = ?
+                    ORDER BY created_at DESC
+                """, (profile_id,)).fetchall()
+            return [dict(row) for row in rows]
+    except Exception:
+        return []

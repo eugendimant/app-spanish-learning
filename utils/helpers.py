@@ -3,10 +3,86 @@ import difflib
 import hashlib
 import random
 import re
+import unicodedata
 from datetime import date, timedelta
 from typing import Optional
 
 from utils.content import COMMON_MISTAKES, REGISTER_MARKERS
+
+
+# Accent normalization map for Spanish
+ACCENT_MAP = {
+    'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+    'ü': 'u', 'ñ': 'n',
+    'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U',
+    'Ü': 'U', 'Ñ': 'N'
+}
+
+
+def normalize_accents(text: str) -> str:
+    """Remove Spanish accent marks from text for lenient comparison.
+
+    Examples:
+        normalize_accents("mañana") -> "manana"
+        normalize_accents("café") -> "cafe"
+        normalize_accents("así") -> "asi"
+    """
+    result = []
+    for char in text:
+        result.append(ACCENT_MAP.get(char, char))
+    return ''.join(result)
+
+
+def compare_answers(user_answer: str, correct_answer: str, accent_tolerant: bool = False) -> bool:
+    """Compare user answer with correct answer, optionally ignoring accents.
+
+    Args:
+        user_answer: The answer provided by the user
+        correct_answer: The expected correct answer
+        accent_tolerant: If True, accept answers without proper accents
+
+    Returns:
+        True if answers match (considering accent tolerance), False otherwise
+    """
+    # Normalize whitespace and case
+    user_normalized = user_answer.lower().strip()
+    correct_normalized = correct_answer.lower().strip()
+
+    # Exact match
+    if user_normalized == correct_normalized:
+        return True
+
+    # If accent tolerant, compare without accents
+    if accent_tolerant:
+        user_no_accent = normalize_accents(user_normalized)
+        correct_no_accent = normalize_accents(correct_normalized)
+        if user_no_accent == correct_no_accent:
+            return True
+
+    return False
+
+
+def get_accent_feedback(user_answer: str, correct_answer: str) -> Optional[str]:
+    """If answer is correct except for accents, provide helpful feedback.
+
+    Returns None if answers don't match even without accents,
+    or a feedback string if only accents are wrong.
+    """
+    user_no_accent = normalize_accents(user_answer.lower().strip())
+    correct_no_accent = normalize_accents(correct_answer.lower().strip())
+
+    if user_no_accent == correct_no_accent and user_answer.lower().strip() != correct_answer.lower().strip():
+        # Find which accents are missing
+        missing_accents = []
+        for i, (user_char, correct_char) in enumerate(zip(user_answer.lower(), correct_answer.lower())):
+            if user_char != correct_char and normalize_accents(correct_char) == user_char:
+                missing_accents.append(f"'{user_char}' should be '{correct_char}'")
+
+        if missing_accents:
+            return f"Close! Just needs accent marks: {', '.join(missing_accents[:3])}"
+        return "Close! Check your accent marks."
+
+    return None
 
 
 def seed_for_week(week_date: date, name: str) -> int:

@@ -682,6 +682,10 @@ CONVERSATION_SCENARIOS = [
     {
         "title": "Negociar un reembolso",
         "brief": "El servicio fallo y necesitas un reembolso parcial sin romper la relacion.",
+        "formality": "formal",
+        "relationship": "service_provider",
+        "relationship_label": "Stranger (Customer Service)",
+        "register_tips": "Use 'usted'. Be polite but firm. Avoid overly casual expressions.",
         "hidden_targets": [
             "Usa 2 mitigadores (quiza, tal vez, me parece).",
             "Incluye una concesion (aunque, si bien).",
@@ -693,6 +697,10 @@ CONVERSATION_SCENARIOS = [
     {
         "title": "Resolver un conflicto en el trabajo",
         "brief": "Un colega no cumplio plazos y necesitas renegociar el cronograma.",
+        "formality": "neutral",
+        "relationship": "coworker",
+        "relationship_label": "Coworker (Equal Status)",
+        "register_tips": "Use 'tu'. Balance directness with collegiality. Stay professional but not stiff.",
         "hidden_targets": [
             "Usa 1 verbo preciso (afrontar, plantear, desactivar).",
             "Incluye una peticion indirecta (seria posible...?).",
@@ -704,6 +712,10 @@ CONVERSATION_SCENARIOS = [
     {
         "title": "Negociar un alquiler",
         "brief": "Quieres negociar el precio del alquiler con argumentos solidos.",
+        "formality": "formal",
+        "relationship": "stranger",
+        "relationship_label": "Stranger (Potential Landlord)",
+        "register_tips": "Use 'usted'. Be respectful and professional. Show you're a reliable tenant.",
         "hidden_targets": [
             "Usa registro formal con usted.",
             "Incluye 2 frases de cortesia.",
@@ -715,6 +727,10 @@ CONVERSATION_SCENARIOS = [
     {
         "title": "Pedir una extension de plazo",
         "brief": "Necesitas mas tiempo para un entregable sin parecer poco profesional.",
+        "formality": "formal",
+        "relationship": "authority",
+        "relationship_label": "Authority Figure (Your Manager)",
+        "register_tips": "Use 'usted' or formal 'tu' depending on workplace culture. Be humble but confident.",
         "hidden_targets": [
             "Justifica con razones concretas.",
             "Ofrece una solucion parcial.",
@@ -726,6 +742,10 @@ CONVERSATION_SCENARIOS = [
     {
         "title": "Queja formal en un hotel",
         "brief": "Tu habitacion tiene problemas y quieres solucion y compensacion.",
+        "formality": "formal",
+        "relationship": "service_provider",
+        "relationship_label": "Stranger (Hotel Staff)",
+        "register_tips": "Use 'usted'. Be firm but polite. Document specific issues. Expect professionalism.",
         "hidden_targets": [
             "Mantén tono firme pero educado.",
             "Enumera los problemas claramente.",

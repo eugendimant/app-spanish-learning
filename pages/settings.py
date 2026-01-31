@@ -413,11 +413,36 @@ def render_preferences():
 
         show_hints = st.toggle("Show hints during exercises", value=True)
 
+    st.divider()
+
+    # Focus Mode and Accent Tolerance - important UX options
+    st.markdown("### Display & Input Options")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        focus_mode = st.toggle(
+            "Focus Mode",
+            value=bool(profile.get("focus_mode", 0)),
+            help="Hide gamification elements like streaks, XP, and achievements to reduce distractions"
+        )
+        st.caption("Hides streaks, XP, achievements, and leaderboards")
+
+    with col2:
+        accent_tolerance = st.toggle(
+            "Accent Tolerance Mode",
+            value=bool(profile.get("accent_tolerance", 0)),
+            help="Accept answers even without proper accent marks (á, é, í, ó, ú, ñ)"
+        )
+        st.caption("Accepts 'manana' as 'mañana', 'cafe' as 'café'")
+
     # Save preferences
     if st.button("Save Preferences", type="primary"):
         update_user_profile({
             **profile,
-            "dialect_preference": dialect
+            "dialect_preference": dialect,
+            "focus_mode": 1 if focus_mode else 0,
+            "accent_tolerance": 1 if accent_tolerance else 0
         })
         st.success("Preferences saved!")
 

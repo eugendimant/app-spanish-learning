@@ -223,9 +223,13 @@ def render_sidebar():
             st.session_state.show_profile_selector = True
             st.rerun()
 
-        # Streak counter
-        streak = get_streak_days(get_progress_history())
-        render_streak_badge(streak)
+        # Check if focus mode is enabled (hide gamification)
+        focus_mode = profile.get("focus_mode", 0)
+
+        # Streak counter - only show if not in focus mode
+        if not focus_mode:
+            streak = get_streak_days(get_progress_history())
+            render_streak_badge(streak)
 
         # Items due badges
         vocab_due = len(get_vocab_for_review())
@@ -331,111 +335,192 @@ def render_sidebar():
 
 
 def render_home_page():
-    """Render the home/dashboard page - simplified and focused."""
+    """Render the home/dashboard page - ONE clear next action."""
     profile = get_user_profile()
     stats = get_total_stats()
 
     # Simple, focused greeting
     name = profile.get('name', '')
     greeting = f"Welcome back, {name}!" if name else "Welcome!"
-    render_hero(
-        title=greeting,
-        subtitle="Ready to practice? Pick up where you left off.",
-        pills=[]  # No cluttering pills
-    )
 
-    # Check items due for review - this is the PRIMARY call to action
+    # Check items due for review
     vocab_due = len(get_vocab_for_review())
     errors_due = len(get_mistakes_for_review())
     total_due = vocab_due + errors_due
 
-    # REVIEW is prominently featured when items are due
-    if total_due > 0:
+    # Determine the ONE primary action for today
+    has_review = total_due > 0
+    vocab_count = stats.get('total_vocab', 0)
+
+    # Set subtitle based on state
+    if has_review:
+        subtitle = "You have items ready for review."
+    elif vocab_count == 0:
+        subtitle = "Let's start learning some vocabulary!"
+    else:
+        subtitle = "Ready for your next practice session?"
+
+    render_hero(
+        title=greeting,
+        subtitle=subtitle,
+        pills=[]  # No cluttering pills
+    )
+
+    # Check if placement test needed - this overrides everything
+    if not profile.get("placement_completed"):
+        st.markdown("""
+        <div class="feedback-box feedback-info" style="padding: 1.5rem; text-align: center;">
+            <strong style="font-size: 1.1rem;">Let's personalize your learning</strong>
+            <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+                A quick assessment will help us recommend the right content for you.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Take Placement Assessment", type="primary", use_container_width=True):
+            st.session_state.current_page = "Settings"
+            st.rerun()
+
+        st.caption("Or skip and start learning →")
+        if st.button("Start Learning", use_container_width=True):
+            st.session_state.current_page = "Topic Diversity"
+            st.rerun()
+        return
+
+    # ============================================
+    # ONE PRIMARY ACTION - unmistakable next step
+    # ============================================
+    st.markdown("### Your Next Step")
+
+    if has_review:
+        # REVIEW is THE primary action when items are due
         st.markdown(f"""
-        <div class="feedback-box feedback-info" style="display: flex; align-items: center; justify-content: space-between; padding: 1.5rem;">
-            <div>
-                <strong style="font-size: 1.1rem;">You have {total_due} items ready for review</strong>
-                <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
-                    {vocab_due} vocabulary + {errors_due} error patterns. Regular review builds lasting memory.
-                </p>
-            </div>
+        <div class="feedback-box feedback-info" style="padding: 1.5rem;">
+            <strong style="font-size: 1.2rem;">🔄 Review {total_due} items</strong>
+            <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+                {vocab_due} vocabulary + {errors_due} error patterns are ready for spaced repetition.
+            </p>
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("Start Review Session", type="primary", use_container_width=True):
+        if st.button("Start Review", type="primary", use_container_width=True):
             st.session_state.current_page = "Review"
             st.rerun()
 
-        st.write("")  # spacing
-
-    # Check if placement test needed
-    if not profile.get("placement_completed"):
-        st.info("Take a quick placement test to personalize your learning path.")
-        if st.button("Start Placement Test"):
-            st.session_state.current_page = "Settings"
+        # ONE secondary option (not multiple competing buttons)
+        st.caption("Or if you prefer something different today:")
+        if st.button("Learn New Vocabulary Instead", type="secondary"):
+            st.session_state.current_page = "Topic Diversity"
             st.rerun()
-        st.divider()
 
-    # Simple metrics - only show 3, not 4
-    col1, col2, col3 = st.columns(3)
+    elif vocab_count == 0:
+        # New user - guide to vocabulary first
+        st.markdown("""
+        <div class="feedback-box feedback-success" style="padding: 1.5rem;">
+            <strong style="font-size: 1.2rem;">📚 Start with Vocabulary</strong>
+            <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+                Build your foundation with real-world vocabulary from different contexts.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with col1:
-        vocab_count = stats.get('total_vocab', 0)
-        st.metric("Words Learned", vocab_count)
+        if st.button("Begin Learning", type="primary", use_container_width=True):
+            st.session_state.current_page = "Topic Diversity"
+            st.rerun()
 
-    with col2:
-        speaking = stats.get('total_speaking', 0)
-        st.metric("Speaking (min)", f"{speaking:.0f}")
+    else:
+        # No review due, has some vocab - recommend next activity
+        # Rotate recommendation based on day to encourage variety
+        day_of_week = date.today().weekday()
+        recommendations = [
+            ("📚 Learn New Vocabulary", "Topic Diversity", "Expand your word bank with fresh contexts"),
+            ("🔤 Practice Verb Precision", "Verb Studio", "Master subtle differences between similar verbs"),
+            ("💬 Conversation Practice", "Conversation", "Build fluency with realistic dialogues"),
+            ("✍️ Writing Coach", "Writing Coach", "Get feedback on your Spanish writing"),
+            ("📚 Learn New Vocabulary", "Topic Diversity", "Keep building your vocabulary"),
+            ("💬 Conversation Practice", "Conversation", "Practice speaking in context"),
+            ("🔤 Verb Studio", "Verb Studio", "Deepen your verb mastery"),
+        ]
+        rec = recommendations[day_of_week]
 
-    with col3:
-        missions = stats.get('total_missions', 0)
-        st.metric("Sessions Complete", missions)
+        st.markdown(f"""
+        <div class="feedback-box feedback-success" style="padding: 1.5rem;">
+            <strong style="font-size: 1.2rem;">{rec[0]}</strong>
+            <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">{rec[2]}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("Let's Go", type="primary", use_container_width=True):
+            st.session_state.current_page = rec[1]
+            st.rerun()
+
+        # ONE secondary option
+        st.caption("Or choose something else:")
+        alt_page = "Conversation" if rec[1] != "Conversation" else "Writing Coach"
+        alt_label = "Try Conversation" if alt_page == "Conversation" else "Try Writing Coach"
+        if st.button(alt_label, type="secondary"):
+            st.session_state.current_page = alt_page
+            st.rerun()
 
     st.divider()
 
-    # Simple 2-column layout: Main actions + Your progress
-    col_main, col_progress = st.columns([2, 1])
+    # ============================================
+    # MINIMAL STATS - not competing for attention
+    # ============================================
+    # Check focus mode
+    focus_mode = profile.get("focus_mode", 0)
 
-    with col_main:
-        render_section_header("What would you like to practice?")
+    if focus_mode:
+        # In focus mode, show only learning stats (no gamification)
+        col1, col2 = st.columns(2)
 
-        # Simple list of actions - not crowded cards
-        actions = [
-            ("📚 Learn New Words", "Topic Diversity", "Discover vocabulary from different real-life contexts"),
-            ("🔤 Verb Precision", "Verb Studio", "Master subtle differences between similar verbs"),
-            ("💬 Conversation Practice", "Conversation", "Roleplay real scenarios with goals"),
-            ("✍️ Writing Coach", "Writing Coach", "Get feedback on your writing with guided corrections"),
+        with col1:
+            st.metric("Words Learned", vocab_count)
+
+        with col2:
+            speaking = stats.get('total_speaking', 0)
+            st.metric("Speaking (min)", f"{speaking:.0f}")
+    else:
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric("Words Learned", vocab_count)
+
+        with col2:
+            speaking = stats.get('total_speaking', 0)
+            st.metric("Speaking (min)", f"{speaking:.0f}")
+
+        with col3:
+            streak = get_streak_days(get_progress_history())
+            st.metric("Day Streak", f"🔥 {streak}" if streak > 0 else "0")
+
+    # ============================================
+    # OTHER OPTIONS - clearly secondary, collapsed
+    # ============================================
+    with st.expander("📋 All practice options"):
+        st.markdown("**Practice**")
+        options = [
+            ("🔄 Review Due Items", "Review"),
+            ("📚 Learn Vocabulary", "Topic Diversity"),
+            ("🔤 Verb Studio", "Verb Studio"),
+            ("💬 Conversation", "Conversation"),
+            ("✍️ Writing Coach", "Writing Coach"),
         ]
+        for label, page in options:
+            if st.button(label, key=f"opt_{page}"):
+                st.session_state.current_page = page
+                st.rerun()
 
-        for icon_text, page, desc in actions:
-            col1, col2 = st.columns([4, 1])
-            with col1:
-                st.markdown(f"**{icon_text}**")
-                st.caption(desc)
-            with col2:
-                if st.button("Go", key=f"go_{page}", use_container_width=True):
-                    st.session_state.current_page = page
-                    st.rerun()
-            st.markdown("---")
-
-    with col_progress:
-        render_section_header("Your Progress")
-
-        # Simple streak display
-        streak = get_streak_days(get_progress_history())
-        if streak > 0:
-            st.markdown(f"🔥 **{streak} day streak** - Keep it up!")
-        else:
-            st.markdown("Start a new streak today!")
-
-        st.write("")
-
-        # Show fingerprint link if there's data
-        st.markdown("**Track your patterns**")
-        st.caption("See which areas need more practice")
-        if st.button("View My Fingerprint", use_container_width=True):
-            st.session_state.current_page = "Fingerprint"
-            st.rerun()
+        st.markdown("**Tools**")
+        tools = [
+            ("✏️ Check My Writing", "Mistake Catcher"),
+            ("🌎 Dialect Guide", "Dialects"),
+            ("🏛️ Memory Palace", "Memory Palace"),
+            ("📊 My Fingerprint", "Fingerprint"),
+        ]
+        for label, page in tools:
+            if st.button(label, key=f"tool_{page}"):
+                st.session_state.current_page = page
+                st.rerun()
 
 
 def render_learn_page():
