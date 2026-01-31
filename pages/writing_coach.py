@@ -306,37 +306,37 @@ def render_writing_feedback(feedback: dict):
     st.divider()
     render_section_header("Feedback")
 
-    # Errors section
+    # Suggestions section (renamed from "Errors")
     if feedback.get("errors"):
-        st.markdown("### Errors Found")
+        st.markdown("### Areas to Polish")
 
         for error in feedback["errors"]:
             with st.expander(f"**{error['type'].replace('_', ' ').title()}**: `{error['found']}`", expanded=True):
                 col1, col2 = st.columns([1, 1])
 
                 with col1:
-                    st.markdown("**You wrote:**")
-                    st.markdown(f"<div class='feedback-box feedback-error'>{error['found']}</div>",
+                    st.markdown("**What you wrote:**")
+                    st.markdown(f"<div class='feedback-box feedback-warning'>{error['found']}</div>",
                               unsafe_allow_html=True)
 
                 with col2:
-                    st.markdown("**Should be:**")
+                    st.markdown("**Try this instead:**")
                     st.markdown(f"<div class='feedback-box feedback-success'>{error['correction']}</div>",
                               unsafe_allow_html=True)
 
                 if error.get("rule"):
-                    st.info(f"**Rule:** {error['rule']}")
+                    st.info(f"**Why?** {error['rule']}")
 
                 # Show related boundary cases if available
                 boundary = RULE_BOUNDARIES.get(error["type"])
                 if boundary:
-                    st.markdown("**Edge Cases:**")
+                    st.markdown("**Good to know:**")
                     for case in boundary.get("boundary_cases", [])[:2]:
                         st.caption(f"- {case['case']}: {case['explanation']}")
     else:
         st.markdown("""
         <div class="feedback-box feedback-success">
-            No major grammar errors detected. Great job!
+            Looking good! No major issues detected in your writing.
         </div>
         """, unsafe_allow_html=True)
 
