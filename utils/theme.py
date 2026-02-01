@@ -76,7 +76,8 @@ def get_css() -> str:
     .main .block-container {
         background: linear-gradient(180deg, #0c0c0f 0%, #111118 100%) !important;
         color: #ffffff !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif, 'Apple Color Emoji',
+            'Segoe UI Emoji', 'Noto Color Emoji' !important;
     }
 
     .main .block-container {
@@ -85,12 +86,27 @@ def get_css() -> str:
     }
 
     /* Hide Streamlit branding */
-    header[data-testid="stHeader"],
     footer,
     #MainMenu,
     .stDeployButton,
     [data-testid="stToolbar"] {
         display: none !important;
+    }
+
+    /* Keep header for sidebar toggle, but make it subtle */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        border-bottom: none !important;
+        height: 2.5rem !important;
+    }
+
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapsedControl"] > button,
+    [data-testid="collapsedControl"],
+    [data-testid="collapsedControl"] > button {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        color: #ffffff !important;
     }
 
     /* ============================================
@@ -204,6 +220,7 @@ def get_css() -> str:
     .stButton > button[data-testid="baseButton-primary"] {
         background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
         color: #ffffff !important;
+        font-weight: 600 !important;
         box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
     }
 
@@ -212,6 +229,11 @@ def get_css() -> str:
         background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%) !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .stButton > button:disabled {
+        color: #cbd5f5 !important;
+        opacity: 0.6 !important;
     }
 
     .stButton > button:active {
