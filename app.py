@@ -3,6 +3,7 @@ VivaLingo - Spanish Learning Platform
 Clean, focused interface for C1-C2 learners.
 """
 import streamlit as st
+from textwrap import dedent
 from datetime import date
 
 # Initialize database and theme first
@@ -29,6 +30,18 @@ st.set_page_config(
 
 # Apply theme
 st.markdown(get_css(), unsafe_allow_html=True)
+
+# Normalize HTML markdown to avoid code blocks from indentation
+_original_markdown = st.markdown
+
+
+def _markdown_with_html(*args, **kwargs):
+    if kwargs.get("unsafe_allow_html") and args and isinstance(args[0], str):
+        args = (dedent(args[0]).strip(),) + args[1:]
+    return _original_markdown(*args, **kwargs)
+
+
+st.markdown = _markdown_with_html
 
 # Initialize database
 try:
@@ -302,7 +315,7 @@ def render_home_page():
         # ----------------------------------------
         last_page = st.session_state.get("last_session", "Topic Diversity")
 
-        render_html("""
+        render_html(f"""
             <div class="action-card action-card-primary" style="margin-bottom: 16px;">
                 <div style="display: flex; align-items: center; gap: 16px;">
                     <div style="font-size: 32px;">▶️</div>
@@ -483,6 +496,19 @@ def render_learn_page():
         if st.button("Start Verbs", type="primary", use_container_width=True, key="learn_verbs"):
             st.session_state.current_page = "Verb Studio"
             st.session_state.last_session = "Verb Studio"
+            st.rerun()
+
+    with col3:
+        st.markdown("""
+        <div class="card">
+            <div style="font-size: 32px; margin-bottom: 12px;">🧩</div>
+            <h3>Context Units</h3>
+            <p style="color: var(--text-muted);">Practice chunked phrases and contextual grammar patterns</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Start Context Units", type="primary", use_container_width=True, key="learn_context"):
+            st.session_state.current_page = "Context Units"
+            st.session_state.last_session = "Context Units"
             st.rerun()
 
     with col3:
