@@ -1,154 +1,109 @@
 """
-Clean, modern design system - Light mode for readability.
-Optimized for Streamlit with proper contrast and iOS-inspired aesthetics.
+Clean design system for Streamlit app.
+Works with Streamlit's light theme (set in .streamlit/config.toml)
 """
 import streamlit as st
 
 
 # ============================================
-# DESIGN TOKENS - Light Mode
+# DESIGN TOKENS
 # ============================================
 COLORS = {
-    # Backgrounds - clean whites and light grays
     "bg_base": "#ffffff",
     "bg_card": "#f8fafc",
     "bg_elevated": "#f1f5f9",
-    "bg_hover": "#e2e8f0",
-
-    # Text - strong contrast
     "text_primary": "#0f172a",
     "text_secondary": "#475569",
     "text_muted": "#64748b",
-
-    # Accent colors - vibrant purple
     "accent": "#6366f1",
     "accent_light": "#818cf8",
-    "accent_dark": "#4f46e5",
-
-    # Semantic
     "success": "#10b981",
     "warning": "#f59e0b",
     "error": "#ef4444",
     "info": "#3b82f6",
-
-    # Borders
     "border": "#e2e8f0",
-    "border_hover": "#cbd5e1",
 }
 
-SPACING = {"xs": "4px", "sm": "8px", "md": "16px", "lg": "24px", "xl": "32px", "2xl": "48px"}
+SPACING = {"xs": "4px", "sm": "8px", "md": "16px", "lg": "24px", "xl": "32px"}
 RADII = {"sm": "8px", "md": "12px", "lg": "16px", "xl": "20px", "full": "9999px"}
 
 
 def get_css() -> str:
-    """Return clean light-mode CSS optimized for readability."""
+    """Return CSS that works with Streamlit's light theme."""
     return """
     <style>
-    /* ============================================
-       CLEAN LIGHT DESIGN SYSTEM
-       High contrast • Reader-friendly • Modern
-       ============================================ */
-
     /* Import Inter font */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     /* ============================================
-       BASE STYLES - Light Mode
+       HIDE SIDEBAR COLLAPSE BUTTON - Keep sidebar always visible
        ============================================ */
-    .stApp,
-    .stApp > div,
-    .main,
-    [data-testid="stAppViewContainer"],
-    [data-testid="stAppViewContainer"] > div,
-    [data-testid="stVerticalBlock"],
-    .main .block-container {
-        background: #ffffff !important;
-        color: #0f172a !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    }
-
-    .main .block-container {
-        padding: 2rem !important;
-        max-width: 1200px !important;
-    }
-
-    /* Hide Streamlit branding */
-    header[data-testid="stHeader"],
-    footer,
-    #MainMenu,
-    .stDeployButton,
-    [data-testid="stToolbar"] {
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="collapsedControl"],
+    button[kind="header"] {
         display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* Force sidebar to always be visible */
+    [data-testid="stSidebar"] {
+        transform: none !important;
+        width: 300px !important;
+        min-width: 300px !important;
     }
 
     /* ============================================
-       SIDEBAR - Clean with visible toggle
+       BASE TYPOGRAPHY - Inter font
        ============================================ */
-    [data-testid="stSidebar"],
-    [data-testid="stSidebar"] > div,
-    section[data-testid="stSidebar"] {
-        background: #f8fafc !important;
-        border-right: 1px solid #e2e8f0 !important;
+    html, body, .stApp, .stMarkdown, p, span, div, label, button {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     }
 
-    [data-testid="stSidebar"] .block-container {
-        padding: 1.5rem 1rem !important;
-        background: transparent !important;
+    /* ============================================
+       HEADINGS - Dark text for readability
+       ============================================ */
+    h1, h2, h3, h4, h5, h6,
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
+        color: #0f172a !important;
+        font-weight: 600 !important;
+        letter-spacing: -0.02em !important;
     }
 
-    /* Sidebar toggle button - ALWAYS VISIBLE */
-    [data-testid="stSidebarCollapseButton"],
-    [data-testid="collapsedControl"],
-    button[kind="header"],
-    [data-testid="stSidebar"] button[kind="header"],
-    .css-1rs6os button,
-    [data-testid="baseButton-header"] {
-        background: #6366f1 !important;
-        color: #ffffff !important;
-        border: none !important;
-        border-radius: 8px !important;
-        width: 40px !important;
-        height: 40px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer !important;
-        position: fixed !important;
-        top: 14px !important;
-        left: 14px !important;
-        z-index: 999999 !important;
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3) !important;
-        opacity: 1 !important;
-        visibility: visible !important;
+    h1, .stMarkdown h1 { font-size: 1.875rem !important; font-weight: 700 !important; }
+    h2, .stMarkdown h2 { font-size: 1.5rem !important; }
+    h3, .stMarkdown h3 { font-size: 1.25rem !important; }
+    h4, .stMarkdown h4 { font-size: 1.1rem !important; }
+
+    /* ============================================
+       PARAGRAPHS AND TEXT
+       ============================================ */
+    p, .stMarkdown p, .stText, span {
+        color: #334155 !important;
     }
 
-    [data-testid="stSidebarCollapseButton"]:hover,
-    [data-testid="collapsedControl"]:hover,
-    button[kind="header"]:hover {
-        background: #4f46e5 !important;
-        transform: scale(1.05) !important;
+    label {
+        color: #334155 !important;
+        font-weight: 500 !important;
     }
 
-    [data-testid="stSidebarCollapseButton"] svg,
-    [data-testid="collapsedControl"] svg,
-    button[kind="header"] svg {
-        fill: #ffffff !important;
-        stroke: #ffffff !important;
-        color: #ffffff !important;
+    strong, b { color: #0f172a !important; }
+
+    /* ============================================
+       SIDEBAR STYLING
+       ============================================ */
+    [data-testid="stSidebar"] {
+        background-color: #f8fafc !important;
     }
 
-    /* Sidebar text styling */
     [data-testid="stSidebar"] h1,
     [data-testid="stSidebar"] h2,
     [data-testid="stSidebar"] h3,
     [data-testid="stSidebar"] h4 {
         color: #64748b !important;
-        font-size: 0.7rem !important;
+        font-size: 0.75rem !important;
         font-weight: 600 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.1em !important;
-        margin-top: 1.5rem !important;
-        margin-bottom: 0.5rem !important;
+        letter-spacing: 0.05em !important;
     }
 
     [data-testid="stSidebar"] p,
@@ -159,100 +114,53 @@ def get_css() -> str:
     }
 
     /* ============================================
-       TYPOGRAPHY - High contrast
-       ============================================ */
-    h1, h2, h3, h4, h5, h6,
-    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
-        font-family: 'Inter', -apple-system, sans-serif !important;
-        color: #0f172a !important;
-        font-weight: 600 !important;
-        letter-spacing: -0.02em !important;
-        line-height: 1.3 !important;
-    }
-
-    h1, .stMarkdown h1 { font-size: 2rem !important; font-weight: 700 !important; }
-    h2, .stMarkdown h2 { font-size: 1.5rem !important; }
-    h3, .stMarkdown h3 { font-size: 1.25rem !important; }
-    h4, .stMarkdown h4 { font-size: 1.1rem !important; }
-
-    p, .stMarkdown p, .stMarkdown, .stText {
-        color: #334155 !important;
-        font-size: 1rem !important;
-        line-height: 1.6 !important;
-        font-family: 'Inter', -apple-system, sans-serif !important;
-    }
-
-    strong, b { color: #0f172a !important; font-weight: 600 !important; }
-    a { color: #6366f1 !important; text-decoration: none !important; }
-    a:hover { color: #4f46e5 !important; text-decoration: underline !important; }
-
-    label, .stTextInput label, .stSelectbox label {
-        color: #334155 !important;
-        font-size: 0.875rem !important;
-        font-weight: 500 !important;
-    }
-
-    /* ============================================
-       BUTTONS - Clear, readable
+       BUTTONS
        ============================================ */
     .stButton > button {
-        font-family: 'Inter', -apple-system, sans-serif !important;
+        font-family: 'Inter', sans-serif !important;
         font-weight: 500 !important;
-        font-size: 0.95rem !important;
         border-radius: 10px !important;
-        padding: 0.75rem 1.5rem !important;
-        min-height: 46px !important;
-        transition: all 0.2s ease !important;
-        cursor: pointer !important;
+        padding: 0.6rem 1.25rem !important;
+        min-height: 44px !important;
+        transition: all 0.15s ease !important;
     }
 
-    /* Secondary button - light gray with dark text */
+    /* Secondary buttons - gray background, dark text */
     .stButton > button:not([kind="primary"]):not([data-testid="baseButton-primary"]) {
-        background: #f1f5f9 !important;
+        background-color: #f1f5f9 !important;
         color: #0f172a !important;
         border: 1px solid #e2e8f0 !important;
     }
 
     .stButton > button:not([kind="primary"]):not([data-testid="baseButton-primary"]):hover {
-        background: #e2e8f0 !important;
-        border-color: #cbd5e1 !important;
+        background-color: #e2e8f0 !important;
+        color: #0f172a !important;
     }
 
-    /* Primary button - solid purple with white text */
+    /* Primary buttons - purple background, white text */
     .stButton > button[kind="primary"],
     .stButton > button[data-testid="baseButton-primary"] {
-        background: #6366f1 !important;
+        background-color: #6366f1 !important;
         color: #ffffff !important;
         border: none !important;
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25) !important;
     }
 
     .stButton > button[kind="primary"]:hover,
     .stButton > button[data-testid="baseButton-primary"]:hover {
-        background: #4f46e5 !important;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35) !important;
+        background-color: #4f46e5 !important;
+        color: #ffffff !important;
     }
 
     /* ============================================
-       FORM INPUTS - Clean with good contrast
+       FORM INPUTS
        ============================================ */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea,
     .stNumberInput > div > div > input {
-        background: #ffffff !important;
-        border: 1px solid #d1d5db !important;
-        border-radius: 10px !important;
+        background-color: #ffffff !important;
         color: #0f172a !important;
-        font-family: 'Inter', sans-serif !important;
-        font-size: 1rem !important;
-        padding: 0.75rem 1rem !important;
-    }
-
-    .stTextInput > div > div > input:focus,
-    .stTextArea > div > div > textarea:focus {
-        border-color: #6366f1 !important;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
-        outline: none !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 8px !important;
     }
 
     .stTextInput > div > div > input::placeholder,
@@ -261,168 +169,37 @@ def get_css() -> str:
     }
 
     /* ============================================
-       SELECT / DROPDOWN
+       SELECT/DROPDOWN
        ============================================ */
-    .stSelectbox > div > div,
-    .stMultiSelect > div > div {
-        background: #ffffff !important;
-        border: 1px solid #d1d5db !important;
-        border-radius: 10px !important;
+    .stSelectbox > div > div {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
     }
 
-    .stSelectbox > div > div > div,
     .stSelectbox [data-baseweb="select"] span {
         color: #0f172a !important;
-    }
-
-    [data-baseweb="popover"],
-    [data-baseweb="menu"],
-    div[role="listbox"],
-    ul[role="listbox"] {
-        background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 10px !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
-    }
-
-    [data-baseweb="menu"] li,
-    div[role="option"],
-    li[role="option"] {
-        color: #0f172a !important;
-        padding: 0.75rem 1rem !important;
-    }
-
-    [data-baseweb="menu"] li:hover,
-    div[role="option"]:hover,
-    li[role="option"]:hover {
-        background: #f1f5f9 !important;
-    }
-
-    /* ============================================
-       RADIO BUTTONS
-       ============================================ */
-    .stRadio > div > label {
-        background: #f8fafc !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 8px !important;
-        padding: 0.75rem 1rem !important;
-        color: #334155 !important;
-        font-weight: 500 !important;
-    }
-
-    .stRadio > div > label:hover {
-        background: #f1f5f9 !important;
-    }
-
-    .stRadio > div > label[data-checked="true"],
-    .stRadio > div > label:has(input:checked) {
-        background: #eef2ff !important;
-        border-color: #6366f1 !important;
-        color: #4f46e5 !important;
     }
 
     /* ============================================
        PROGRESS BAR
        ============================================ */
     .stProgress > div > div {
-        background: #e2e8f0 !important;
-        border-radius: 6px !important;
-        height: 8px !important;
+        background-color: #e2e8f0 !important;
     }
 
     .stProgress > div > div > div {
-        background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%) !important;
-        border-radius: 6px !important;
+        background: linear-gradient(90deg, #6366f1, #8b5cf6) !important;
     }
 
     /* ============================================
-       EXPANDER
+       CUSTOM CARD CLASSES
        ============================================ */
-    .streamlit-expanderHeader {
-        background: #f8fafc !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 10px !important;
-        color: #0f172a !important;
-        font-weight: 500 !important;
-    }
-
-    .streamlit-expanderHeader:hover {
-        background: #f1f5f9 !important;
-    }
-
-    .streamlit-expanderContent {
-        background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-top: none !important;
-        border-radius: 0 0 10px 10px !important;
-        color: #334155 !important;
-    }
-
-    /* ============================================
-       TABS
-       ============================================ */
-    .stTabs [data-baseweb="tab-list"] {
-        background: #f1f5f9 !important;
-        border-radius: 10px !important;
-        padding: 4px !important;
-        gap: 4px !important;
-    }
-
-    .stTabs [data-baseweb="tab"] {
-        background: transparent !important;
-        color: #64748b !important;
-        border-radius: 8px !important;
-        padding: 0.5rem 1rem !important;
-        font-weight: 500 !important;
-        border: none !important;
-    }
-
-    .stTabs [data-baseweb="tab"]:hover {
-        color: #0f172a !important;
-    }
-
-    .stTabs [aria-selected="true"] {
-        background: #ffffff !important;
-        color: #0f172a !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-    }
-
-    /* ============================================
-       ALERTS
-       ============================================ */
-    .stAlert, div[data-testid="stAlert"] {
-        background: #f8fafc !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 10px !important;
-        color: #334155 !important;
-    }
-
-    /* ============================================
-       DIVIDER
-       ============================================ */
-    hr {
-        border: none !important;
-        border-top: 1px solid #e2e8f0 !important;
-        margin: 1.5rem 0 !important;
-    }
-
-    /* ============================================
-       CUSTOM COMPONENT CLASSES
-       ============================================ */
-
-    /* Card */
     .card {
-        background: #ffffff !important;
+        background-color: #ffffff !important;
         border: 1px solid #e2e8f0 !important;
-        border-radius: 14px !important;
-        padding: 1.5rem !important;
+        border-radius: 12px !important;
+        padding: 1.25rem !important;
         margin-bottom: 1rem !important;
-        transition: all 0.2s ease !important;
-    }
-
-    .card:hover {
-        border-color: #cbd5e1 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
     }
 
     .card h3, .card h4 {
@@ -432,190 +209,156 @@ def get_css() -> str:
 
     .card p {
         color: #64748b !important;
+        margin: 0 !important;
     }
 
-    /* Glass Card - subtle elevation */
     .glass-card {
-        background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 14px !important;
-        padding: 1.5rem !important;
-        margin-bottom: 1rem !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-    }
-
-    .glass-card:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
-    }
-
-    /* Stat Card */
-    .stat-card {
-        background: #f8fafc !important;
+        background-color: #ffffff !important;
         border: 1px solid #e2e8f0 !important;
         border-radius: 12px !important;
         padding: 1.25rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Stat cards */
+    .stat-card {
+        background-color: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 1rem !important;
         text-align: center !important;
     }
 
     .stat-value {
-        font-size: 1.75rem !important;
+        font-size: 1.5rem !important;
         font-weight: 700 !important;
         color: #0f172a !important;
-        line-height: 1.2 !important;
-        margin-bottom: 0.25rem !important;
     }
 
     .stat-label {
-        font-size: 0.8rem !important;
+        font-size: 0.75rem !important;
         color: #64748b !important;
         text-transform: uppercase !important;
         letter-spacing: 0.05em !important;
-        font-weight: 500 !important;
     }
 
-    /* Action Card */
+    /* Action cards */
     .action-card {
-        background: #ffffff !important;
+        background-color: #ffffff !important;
         border: 1px solid #e2e8f0 !important;
-        border-radius: 14px !important;
-        padding: 1.25rem !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease !important;
-    }
-
-    .action-card:hover {
-        border-color: #6366f1 !important;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1) !important;
-    }
-
-    .action-card-primary {
-        background: #eef2ff !important;
-        border-color: #c7d2fe !important;
+        border-radius: 12px !important;
+        padding: 1rem !important;
     }
 
     .action-card-title {
-        font-size: 1.1rem !important;
         font-weight: 600 !important;
         color: #0f172a !important;
-        margin-bottom: 0.25rem !important;
     }
 
     .action-card-subtitle {
-        font-size: 0.9rem !important;
         color: #64748b !important;
+        font-size: 0.875rem !important;
     }
 
-    /* Pills / Badges */
+    /* Pills/badges */
     .pill {
-        display: inline-flex !important;
-        align-items: center !important;
-        padding: 0.35rem 0.75rem !important;
+        display: inline-block !important;
+        padding: 0.25rem 0.75rem !important;
         border-radius: 9999px !important;
         font-size: 0.75rem !important;
         font-weight: 600 !important;
     }
 
     .pill-accent {
-        background: #eef2ff !important;
+        background-color: #eef2ff !important;
         color: #4f46e5 !important;
     }
 
     .pill-success {
-        background: #d1fae5 !important;
+        background-color: #d1fae5 !important;
         color: #047857 !important;
     }
 
     .pill-warning {
-        background: #fef3c7 !important;
+        background-color: #fef3c7 !important;
         color: #b45309 !important;
     }
 
     .pill-error {
-        background: #fee2e2 !important;
+        background-color: #fee2e2 !important;
         color: #b91c1c !important;
     }
 
-    /* Feedback Boxes */
+    /* Feedback boxes */
     .feedback-box {
-        padding: 1rem 1.25rem !important;
+        padding: 1rem !important;
         border-radius: 10px !important;
         margin: 1rem 0 !important;
     }
 
     .feedback-success {
-        background: #d1fae5 !important;
+        background-color: #d1fae5 !important;
         border: 1px solid #6ee7b7 !important;
         color: #047857 !important;
     }
 
     .feedback-error {
-        background: #fee2e2 !important;
+        background-color: #fee2e2 !important;
         border: 1px solid #fca5a5 !important;
         color: #b91c1c !important;
     }
 
     .feedback-warning {
-        background: #fef3c7 !important;
+        background-color: #fef3c7 !important;
         border: 1px solid #fcd34d !important;
         color: #b45309 !important;
     }
 
     .feedback-info {
-        background: #dbeafe !important;
+        background-color: #dbeafe !important;
         border: 1px solid #93c5fd !important;
         color: #1d4ed8 !important;
-    }
-
-    /* Exercise prompt */
-    .exercise-prompt {
-        font-size: 1.25rem !important;
-        color: #0f172a !important;
-        line-height: 1.6 !important;
-        margin-bottom: 1rem !important;
-    }
-
-    .cloze-blank {
-        display: inline-block !important;
-        min-width: 100px !important;
-        border-bottom: 2px solid #6366f1 !important;
-        color: #6366f1 !important;
-        text-align: center !important;
-        margin: 0 4px !important;
-        padding: 0 8px !important;
     }
 
     /* Hero section */
     .hero {
         background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%) !important;
         border: 1px solid #e0e7ff !important;
-        border-radius: 16px !important;
-        padding: 2rem !important;
+        border-radius: 14px !important;
+        padding: 1.5rem !important;
         margin-bottom: 1.5rem !important;
     }
 
     .hero-title {
-        font-size: 1.75rem !important;
+        font-size: 1.5rem !important;
         font-weight: 700 !important;
         color: #0f172a !important;
-        margin-bottom: 0.5rem !important;
     }
 
     .hero-subtitle {
-        font-size: 1rem !important;
         color: #64748b !important;
     }
 
-    /* Focus states for accessibility */
-    *:focus-visible {
-        outline: 2px solid #6366f1 !important;
-        outline-offset: 2px !important;
+    /* Exercise elements */
+    .exercise-prompt {
+        font-size: 1.125rem !important;
+        color: #0f172a !important;
+        line-height: 1.6 !important;
     }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .cloze-blank {
+        display: inline-block !important;
+        min-width: 80px !important;
+        border-bottom: 2px solid #6366f1 !important;
+        color: #6366f1 !important;
+        text-align: center !important;
+        margin: 0 4px !important;
+    }
+
+    /* Hide Streamlit elements */
+    #MainMenu, footer, header[data-testid="stHeader"] {
+        visibility: hidden !important;
+    }
     </style>
     """
 
@@ -633,7 +376,7 @@ def render_hero(title: str, subtitle: str = "", pills: list = None) -> None:
     """Render a hero section."""
     pills_html = ""
     if pills:
-        pills_html = '<div style="margin-bottom: 12px;">' + ' '.join(
+        pills_html = '<div style="margin-bottom: 10px;">' + ' '.join(
             f'<span class="pill pill-accent">{p}</span>' for p in pills
         ) + '</div>'
 
@@ -662,7 +405,7 @@ def render_section_header(title: str, action_label: str = None, action_key: str 
 
 def render_metric_card(value: str, label: str, icon: str = "") -> str:
     """Return HTML for a metric card."""
-    icon_html = f'<div style="font-size: 24px; margin-bottom: 8px;">{icon}</div>' if icon else ''
+    icon_html = f'<div style="font-size: 20px; margin-bottom: 6px;">{icon}</div>' if icon else ''
     return f"""
     <div class="stat-card">
         {icon_html}
@@ -709,7 +452,7 @@ def render_pill(text: str, variant: str = "accent") -> str:
 
 def render_feedback(feedback_type: str, message: str, details: str = "") -> None:
     """Render a feedback box."""
-    details_html = f'<div style="margin-top: 8px; opacity: 0.9;">{details}</div>' if details else ''
+    details_html = f'<div style="margin-top: 8px;">{details}</div>' if details else ''
     st.markdown(f"""
     <div class="feedback-box feedback-{feedback_type}">
         <strong>{message}</strong>
@@ -720,7 +463,7 @@ def render_feedback(feedback_type: str, message: str, details: str = "") -> None
 
 def render_card(content: str, title: str = "") -> None:
     """Render a card."""
-    title_html = f'<h4 style="margin-bottom: 12px; color: #0f172a;">{title}</h4>' if title else ''
+    title_html = f'<h4 style="margin-bottom: 10px; color: #0f172a;">{title}</h4>' if title else ''
     st.markdown(f"""
     <div class="glass-card">
         {title_html}
@@ -751,17 +494,19 @@ def render_stat_card(value: str, label: str, icon: str = "") -> None:
 
 def render_action_card(title: str, subtitle: str, meta: str = "", primary: bool = False, icon: str = "") -> None:
     """Render an action card."""
-    primary_class = "action-card-primary" if primary else ""
-    icon_html = f'<span style="font-size: 28px; margin-right: 16px;">{icon}</span>' if icon else ''
-    meta_html = f'<div style="font-size: 0.75rem; color: #64748b; margin-top: 8px;">{meta}</div>' if meta else ''
+    bg_color = "#eef2ff" if primary else "#ffffff"
+    border_color = "#c7d2fe" if primary else "#e2e8f0"
+    icon_html = f'<span style="font-size: 24px; margin-right: 12px;">{icon}</span>' if icon else ''
+    meta_html = f'<div style="font-size: 0.75rem; color: #64748b; margin-top: 6px;">{meta}</div>' if meta else ''
 
     st.markdown(f"""
-    <div class="action-card {primary_class}">
+    <div style="background-color: {bg_color}; border: 1px solid {border_color};
+                border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;">
         <div style="display: flex; align-items: flex-start;">
             {icon_html}
             <div>
-                <div class="action-card-title">{title}</div>
-                <div class="action-card-subtitle">{subtitle}</div>
+                <div style="font-weight: 600; color: #0f172a;">{title}</div>
+                <div style="color: #64748b; font-size: 0.875rem;">{subtitle}</div>
                 {meta_html}
             </div>
         </div>
@@ -773,12 +518,12 @@ def render_streak_badge(streak: int) -> None:
     """Render a streak badge."""
     if streak > 0:
         st.markdown(f"""
-        <div style="display: inline-flex; align-items: center; gap: 10px;
-                    background: #fef3c7; padding: 10px 18px;
-                    border-radius: 10px; border: 1px solid #fcd34d;">
-            <span style="font-size: 1.5rem;">🔥</span>
-            <span style="font-size: 1.25rem; font-weight: 700; color: #b45309;">{streak}</span>
-            <span style="color: #92400e; font-size: 0.9rem;">day{'s' if streak != 1 else ''}</span>
+        <div style="display: inline-flex; align-items: center; gap: 8px;
+                    background-color: #fef3c7; padding: 8px 14px;
+                    border-radius: 8px; border: 1px solid #fcd34d;">
+            <span style="font-size: 1.25rem;">🔥</span>
+            <span style="font-size: 1.125rem; font-weight: 700; color: #b45309;">{streak}</span>
+            <span style="color: #92400e; font-size: 0.875rem;">day{'s' if streak != 1 else ''}</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -786,8 +531,8 @@ def render_streak_badge(streak: int) -> None:
 def render_empty_state(message: str, icon: str = "📭") -> None:
     """Render an empty state."""
     st.markdown(f"""
-    <div style="text-align: center; padding: 3rem 1rem; color: #64748b;">
-        <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">{icon}</div>
+    <div style="text-align: center; padding: 2rem 1rem;">
+        <div style="font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.5;">{icon}</div>
         <p style="color: #64748b;">{message}</p>
     </div>
     """, unsafe_allow_html=True)
@@ -809,9 +554,9 @@ def render_loading_skeleton(height: str = "100px") -> None:
 def render_error_state(message: str, retry_label: str = "Try again") -> bool:
     """Render error state. Returns True if retry clicked."""
     st.markdown(f"""
-    <div style="text-align: center; padding: 2rem; background: #fee2e2;
-                border-radius: 14px; border: 1px solid #fca5a5;">
-        <p style="color: #b91c1c; font-size: 1.1rem;"><strong>Something went wrong</strong></p>
+    <div style="text-align: center; padding: 1.5rem; background-color: #fee2e2;
+                border-radius: 12px; border: 1px solid #fca5a5;">
+        <p style="color: #b91c1c; font-size: 1rem;"><strong>Something went wrong</strong></p>
         <p style="color: #dc2626;">{message}</p>
     </div>
     """, unsafe_allow_html=True)
@@ -820,25 +565,25 @@ def render_error_state(message: str, retry_label: str = "Try again") -> bool:
 
 def render_profile_card(name: str, level: str, vocab_count: int, streak: int, is_active: bool = False) -> str:
     """Render a profile card."""
-    border = 'border-color: #6366f1;' if is_active else ''
+    border_color = "#6366f1" if is_active else "#e2e8f0"
     badge = '<span class="pill pill-success">Active</span>' if is_active else ''
 
     return f"""
-    <div class="glass-card" style="{border}">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+    <div class="glass-card" style="border-color: {border_color};">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <div>
-                <div style="font-weight: 600; font-size: 1.1rem; color: #0f172a;">{name}</div>
+                <div style="font-weight: 600; color: #0f172a;">{name}</div>
                 <div style="font-size: 0.875rem; color: #64748b;">Level: {level}</div>
             </div>
             {badge}
         </div>
-        <div style="display: flex; gap: 24px;">
+        <div style="display: flex; gap: 20px;">
             <div>
-                <div style="font-weight: 700; font-size: 1.25rem; color: #0f172a;">{vocab_count}</div>
+                <div style="font-weight: 700; color: #0f172a;">{vocab_count}</div>
                 <div style="font-size: 0.75rem; color: #64748b;">Words</div>
             </div>
             <div>
-                <div style="font-weight: 700; font-size: 1.25rem; color: #b45309;">{streak}🔥</div>
+                <div style="font-weight: 700; color: #b45309;">{streak}🔥</div>
                 <div style="font-size: 0.75rem; color: #64748b;">Streak</div>
             </div>
         </div>
@@ -870,7 +615,7 @@ def render_exercise_feedback(correct: bool, correct_answer: str, explanation: st
         </div>
         """, unsafe_allow_html=True)
     else:
-        mistake_html = f'<div style="margin-top: 8px; opacity: 0.85;"><em>Tip: {common_mistake}</em></div>' if common_mistake else ''
+        mistake_html = f'<div style="margin-top: 8px;"><em>Tip: {common_mistake}</em></div>' if common_mistake else ''
         st.markdown(f"""
         <div class="feedback-box feedback-error">
             <strong>✗ Not quite</strong>
