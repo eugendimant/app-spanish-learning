@@ -52,6 +52,21 @@ def get_css() -> str:
     /* ============================================
        BASE STYLES - Dark Mode Foundation
        ============================================ */
+    :root {
+        --bg-surface: rgba(255, 255, 255, 0.03);
+        --bg-elevated: rgba(255, 255, 255, 0.06);
+        --surface: rgba(255, 255, 255, 0.03);
+        --border: rgba(255, 255, 255, 0.08);
+        --primary: #6366f1;
+        --accent: #6366f1;
+        --accent-muted: rgba(99, 102, 241, 0.15);
+        --text-primary: #ffffff;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --error: #ef4444;
+    }
     .stApp,
     .stApp > div,
     .main,
@@ -232,10 +247,8 @@ def get_css() -> str:
     .stTextArea > div > div > textarea,
     .stNumberInput > div > div > input,
     div[data-baseweb="input"] input,
-    div[data-baseweb="textarea"] textarea,
-    input[type="text"],
-    textarea {
-        background: rgba(15, 17, 23, 0.9) !important;
+    div[data-baseweb="textarea"] textarea {
+        background: rgba(15, 15, 20, 0.9) !important;
         backdrop-filter: blur(10px) !important;
         border: 1px solid rgba(148, 163, 184, 0.25) !important;
         border-radius: 12px !important;
@@ -247,7 +260,9 @@ def get_css() -> str:
     }
 
     .stTextInput > div > div > input:focus,
-    .stTextArea > div > div > textarea:focus {
+    .stTextArea > div > div > textarea:focus,
+    div[data-baseweb="input"] input:focus,
+    div[data-baseweb="textarea"] textarea:focus {
         border-color: #6366f1 !important;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 0 20px rgba(99, 102, 241, 0.15) !important;
         outline: none !important;
@@ -256,45 +271,15 @@ def get_css() -> str:
     .stTextInput > div > div > input::placeholder,
     .stTextArea > div > div > textarea::placeholder,
     div[data-baseweb="input"] input::placeholder,
-    div[data-baseweb="textarea"] textarea::placeholder,
-    input[type="text"]::placeholder,
-    textarea::placeholder {
+    div[data-baseweb="textarea"] textarea::placeholder {
         color: #64748b !important;
     }
 
-    /* Radio & checkbox options */
-    div[role="radiogroup"] label,
-    div[role="group"] label {
-        background: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 12px !important;
-        padding: 0.4rem 0.75rem !important;
-        margin: 0.15rem 0.25rem !important;
-        transition: all 0.2s ease !important;
-    }
-
-    div[role="radiogroup"] label:hover,
-    div[role="group"] label:hover {
-        border-color: rgba(129, 140, 248, 0.5) !important;
-        background: rgba(129, 140, 248, 0.12) !important;
-    }
-
-    label[data-baseweb="radio"] input:checked + div,
-    label[data-baseweb="checkbox"] input:checked + div {
-        background: rgba(99, 102, 241, 0.18) !important;
-        border-radius: 10px !important;
-    }
-
-    div[role="radiogroup"] label input:checked + div,
-    div[role="group"] label input:checked + div {
-        color: #ffffff !important;
-    }
-
-    div[role="radiogroup"] label:has(input:checked),
-    div[role="group"] label:has(input:checked) {
-        border-color: rgba(99, 102, 241, 0.7) !important;
-        background: rgba(99, 102, 241, 0.2) !important;
-        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    div[data-baseweb="input"] input,
+    div[data-baseweb="textarea"] textarea {
+        caret-color: #e2e8f0 !important;
     }
 
     /* ============================================
@@ -310,6 +295,29 @@ def get_css() -> str:
     .stSelectbox > div > div > div,
     .stSelectbox [data-baseweb="select"] span {
         color: #ffffff !important;
+    }
+
+    /* Radio buttons - make selection obvious */
+    div[role="radiogroup"] input[type="radio"] {
+        accent-color: #6366f1 !important;
+    }
+
+    div[role="radiogroup"] label[data-baseweb="radio"] {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
+        padding: 8px 12px !important;
+        margin-right: 8px !important;
+    }
+
+    div[role="radiogroup"] label[data-baseweb="radio"][aria-checked="true"] {
+        background: rgba(99, 102, 241, 0.2) !important;
+        border-color: rgba(99, 102, 241, 0.6) !important;
+    }
+
+    div[role="radiogroup"] label[data-baseweb="radio"] span {
+        color: #e2e8f0 !important;
+        font-weight: 500 !important;
     }
 
     /* Dropdown popover */
