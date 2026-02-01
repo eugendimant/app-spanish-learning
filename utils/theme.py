@@ -228,7 +228,7 @@ def get_css() -> str:
     div[data-baseweb="textarea"] textarea {
         background: rgba(15, 15, 20, 0.9) !important;
         backdrop-filter: blur(10px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(148, 163, 184, 0.25) !important;
         border-radius: 12px !important;
         color: #e2e8f0 !important;
         font-family: 'Inter', sans-serif !important;
