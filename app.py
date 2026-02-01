@@ -109,11 +109,11 @@ def render_sidebar():
     with st.sidebar:
         # App header
         st.markdown("""
-        <div style="padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 16px;">
-            <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">
+        <div style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 16px;">
+            <div style="font-size: 24px; font-weight: 700; color: #0f172a;">
                 🇪🇸 VivaLingo
             </div>
-            <div style="font-size: 12px; color: var(--text-muted);">Spanish Mastery</div>
+            <div style="font-size: 12px; color: #64748b;">Spanish Mastery</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -123,15 +123,15 @@ def render_sidebar():
             streak = get_streak_days(get_progress_history())
             st.markdown(f"""
             <div style="display: flex; align-items: center; gap: 12px; padding: 12px;
-                        background: var(--bg-surface); border-radius: 8px; margin-bottom: 16px;">
+                        background: #f8fafc; border-radius: 8px; margin-bottom: 16px;">
                 <div style="width: 36px; height: 36px; border-radius: 50%;
-                            background: var(--accent); display: flex; align-items: center;
+                            background: #6366f1; display: flex; align-items: center;
                             justify-content: center; color: white; font-weight: 600;">
                     {profile['name'][0].upper()}
                 </div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 500; color: var(--text-primary);">{profile['name']}</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">Level {profile.get('level', 'C1')}</div>
+                    <div style="font-weight: 500; color: #0f172a;">{profile['name']}</div>
+                    <div style="font-size: 12px; color: #64748b;">Level {profile.get('level', 'C1')}</div>
                 </div>
                 {f'<div style="font-size: 14px;">🔥 {streak}</div>' if streak > 0 else ''}
             </div>
@@ -144,9 +144,9 @@ def render_sidebar():
 
         if total_due > 0:
             st.markdown(f"""
-            <div style="background: var(--accent-muted); border: 1px solid rgba(99, 102, 241, 0.3);
+            <div style="background: #eef2ff; border: 1px solid rgba(99, 102, 241, 0.3);
                         border-radius: 8px; padding: 10px 12px; margin-bottom: 16px;">
-                <div style="font-size: 13px; color: var(--accent);">
+                <div style="font-size: 13px; color: #6366f1;">
                     <strong>{total_due}</strong> items due for review
                 </div>
             </div>
@@ -198,7 +198,7 @@ def render_onboarding():
         <div style="text-align: center; padding: 32px 0;">
             <div style="font-size: 48px; margin-bottom: 16px;">🇪🇸</div>
             <h1 style="margin-bottom: 8px;">Welcome to VivaLingo</h1>
-            <p style="color: var(--text-secondary);">Let's set up your learning profile</p>
+            <p style="color: #475569;">Let's set up your learning profile</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -380,7 +380,7 @@ def render_home_page():
                 <div class="card" style="text-align: center; padding: 20px;">
                     <div style="font-size: 28px; margin-bottom: 8px;">{rec['icon']}</div>
                     <div style="font-weight: 600; margin-bottom: 4px;">{rec['title']}</div>
-                    <div style="font-size: 13px; color: var(--text-muted);">{rec['desc']}</div>
+                    <div style="font-size: 13px; color: #64748b;">{rec['desc']}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 if st.button("Start", key=f"rec_{i}", use_container_width=True):
@@ -411,10 +411,10 @@ def render_home_page():
         <div class="stat-card" style="margin-bottom: 12px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                 <span style="font-weight: 500;">Weekly Goal</span>
-                <span style="color: var(--text-muted);">{sessions_this_week}/{weekly_goal}</span>
+                <span style="color: #64748b;">{sessions_this_week}/{weekly_goal}</span>
             </div>
-            <div style="background: var(--bg-elevated); height: 8px; border-radius: 4px; overflow: hidden;">
-                <div style="background: var(--accent); height: 100%; width: {progress_pct * 100}%; border-radius: 4px;"></div>
+            <div style="background: #f1f5f9; height: 8px; border-radius: 4px; overflow: hidden;">
+                <div style="background: #6366f1; height: 100%; width: {progress_pct * 100}%; border-radius: 4px;"></div>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -441,8 +441,8 @@ def render_home_page():
         weak_areas = ["Subjunctive mood", "Ser vs Estar", "Preterite vs Imperfect"]
         for area in weak_areas[:3]:
             st.markdown(f"""
-            <div style="padding: 8px 12px; background: var(--bg-surface); border-radius: 6px;
-                        margin-bottom: 8px; font-size: 13px; border-left: 3px solid var(--warning);">
+            <div style="padding: 8px 12px; background: #f8fafc; border-radius: 6px;
+                        margin-bottom: 8px; font-size: 13px; border-left: 3px solid #f59e0b;">
                 {area}
             </div>
             """, unsafe_allow_html=True)
@@ -457,14 +457,14 @@ def render_learn_page():
     st.markdown("## Learn")
     st.markdown("Build your vocabulary and grammar skills")
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         st.markdown("""
         <div class="card">
             <div style="font-size: 32px; margin-bottom: 12px;">📚</div>
             <h3>Vocabulary</h3>
-            <p style="color: var(--text-muted);">Learn new words in context with the Topic Diversity Engine</p>
+            <p style="color: #64748b;">Learn new words in context with the Topic Diversity Engine</p>
         </div>
         """, unsafe_allow_html=True)
         if st.button("Start Vocabulary", type="primary", use_container_width=True, key="learn_vocab"):
@@ -477,12 +477,25 @@ def render_learn_page():
         <div class="card">
             <div style="font-size: 32px; margin-bottom: 12px;">🔤</div>
             <h3>Verb Mastery</h3>
-            <p style="color: var(--text-muted);">Master verb nuances, tenses, and near-synonyms</p>
+            <p style="color: #64748b;">Master verb nuances, tenses, and near-synonyms</p>
         </div>
         """, unsafe_allow_html=True)
         if st.button("Start Verbs", type="primary", use_container_width=True, key="learn_verbs"):
             st.session_state.current_page = "Verb Studio"
             st.session_state.last_session = "Verb Studio"
+            st.rerun()
+
+    with col3:
+        st.markdown("""
+        <div class="card">
+            <div style="font-size: 32px; margin-bottom: 12px;">🧩</div>
+            <h3>Context Units</h3>
+            <p style="color: #64748b;">Practice chunked phrases and contextual grammar patterns</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Start Context Units", type="primary", use_container_width=True, key="learn_context_units"):
+            st.session_state.current_page = "Context Units"
+            st.session_state.last_session = "Context Units"
             st.rerun()
 
 
@@ -510,7 +523,7 @@ def render_practice_page():
             <div class="card">
                 <div style="font-size: 28px; margin-bottom: 8px;">{mode['icon']}</div>
                 <h4>{mode['title']}</h4>
-                <p style="color: var(--text-muted); font-size: 14px;">{mode['desc']}</p>
+                <p style="color: #64748b; font-size: 14px;">{mode['desc']}</p>
             </div>
             """, unsafe_allow_html=True)
             if st.button(f"Start {mode['title']}", key=f"practice_{i}", use_container_width=True):

@@ -1,35 +1,39 @@
 """
-Beautiful iOS-style design system with glassmorphism effects.
-Modern 2026 aesthetics with smooth gradients and elegant UI.
+Clean, modern design system - Light mode for readability.
+Optimized for Streamlit with proper contrast and iOS-inspired aesthetics.
 """
 import streamlit as st
 
 
 # ============================================
-# DESIGN TOKENS
+# DESIGN TOKENS - Light Mode
 # ============================================
 COLORS = {
-    # Backgrounds with depth
-    "bg_base": "#0c0c0f",
-    "bg_card": "#16161a",
-    "bg_elevated": "#1e1e24",
-    "bg_glass": "rgba(255, 255, 255, 0.05)",
+    # Backgrounds - clean whites and light grays
+    "bg_base": "#ffffff",
+    "bg_card": "#f8fafc",
+    "bg_elevated": "#f1f5f9",
+    "bg_hover": "#e2e8f0",
 
-    # Text with great contrast
-    "text_primary": "#ffffff",
-    "text_secondary": "#94a3b8",
+    # Text - strong contrast
+    "text_primary": "#0f172a",
+    "text_secondary": "#475569",
     "text_muted": "#64748b",
 
-    # Accent colors - vibrant but refined
+    # Accent colors - vibrant purple
     "accent": "#6366f1",
     "accent_light": "#818cf8",
-    "accent_glow": "rgba(99, 102, 241, 0.25)",
+    "accent_dark": "#4f46e5",
 
     # Semantic
     "success": "#10b981",
     "warning": "#f59e0b",
     "error": "#ef4444",
     "info": "#3b82f6",
+
+    # Borders
+    "border": "#e2e8f0",
+    "border_hover": "#cbd5e1",
 }
 
 SPACING = {"xs": "4px", "sm": "8px", "md": "16px", "lg": "24px", "xl": "32px", "2xl": "48px"}
@@ -37,19 +41,19 @@ RADII = {"sm": "8px", "md": "12px", "lg": "16px", "xl": "20px", "full": "9999px"
 
 
 def get_css() -> str:
-    """Return iOS-style CSS with glassmorphism and modern aesthetics."""
+    """Return clean light-mode CSS optimized for readability."""
     return """
     <style>
     /* ============================================
-       iOS-STYLE DESIGN SYSTEM 2026
-       Glassmorphism • Depth • Elegance
+       CLEAN LIGHT DESIGN SYSTEM
+       High contrast • Reader-friendly • Modern
        ============================================ */
 
-    /* Import Inter font for iOS-like typography */
+    /* Import Inter font */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     /* ============================================
-       BASE STYLES - Dark Mode Foundation
+       BASE STYLES - Light Mode
        ============================================ */
     .stApp,
     .stApp > div,
@@ -58,8 +62,8 @@ def get_css() -> str:
     [data-testid="stAppViewContainer"] > div,
     [data-testid="stVerticalBlock"],
     .main .block-container {
-        background: linear-gradient(180deg, #0c0c0f 0%, #111118 100%) !important;
-        color: #ffffff !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
@@ -78,49 +82,13 @@ def get_css() -> str:
     }
 
     /* ============================================
-       TYPOGRAPHY - Clean iOS Style
-       ============================================ */
-    h1, h2, h3, h4, h5, h6,
-    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
-        font-family: 'Inter', -apple-system, sans-serif !important;
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        letter-spacing: -0.02em !important;
-        line-height: 1.2 !important;
-    }
-
-    h1, .stMarkdown h1 { font-size: 2.25rem !important; font-weight: 700 !important; }
-    h2, .stMarkdown h2 { font-size: 1.75rem !important; }
-    h3, .stMarkdown h3 { font-size: 1.25rem !important; }
-    h4, .stMarkdown h4 { font-size: 1.1rem !important; }
-
-    p, .stMarkdown p, .stMarkdown, .stText {
-        color: #94a3b8 !important;
-        font-size: 1rem !important;
-        line-height: 1.6 !important;
-        font-family: 'Inter', -apple-system, sans-serif !important;
-    }
-
-    strong, b { color: #ffffff !important; font-weight: 600 !important; }
-    a { color: #818cf8 !important; text-decoration: none !important; }
-    a:hover { color: #a5b4fc !important; }
-
-    label {
-        color: #94a3b8 !important;
-        font-size: 0.875rem !important;
-        font-weight: 500 !important;
-    }
-
-    /* ============================================
-       SIDEBAR - Frosted Glass Effect
+       SIDEBAR - Clean with visible toggle
        ============================================ */
     [data-testid="stSidebar"],
     [data-testid="stSidebar"] > div,
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, rgba(22, 22, 26, 0.95) 0%, rgba(16, 16, 20, 0.98) 100%) !important;
-        backdrop-filter: blur(20px) !important;
-        -webkit-backdrop-filter: blur(20px) !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+        background: #f8fafc !important;
+        border-right: 1px solid #e2e8f0 !important;
     }
 
     [data-testid="stSidebar"] .block-container {
@@ -128,6 +96,48 @@ def get_css() -> str:
         background: transparent !important;
     }
 
+    /* Sidebar toggle button - ALWAYS VISIBLE */
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="collapsedControl"],
+    button[kind="header"],
+    [data-testid="stSidebar"] button[kind="header"],
+    .css-1rs6os button,
+    [data-testid="baseButton-header"] {
+        background: #6366f1 !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        width: 40px !important;
+        height: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        position: fixed !important;
+        top: 14px !important;
+        left: 14px !important;
+        z-index: 999999 !important;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3) !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    [data-testid="stSidebarCollapseButton"]:hover,
+    [data-testid="collapsedControl"]:hover,
+    button[kind="header"]:hover {
+        background: #4f46e5 !important;
+        transform: scale(1.05) !important;
+    }
+
+    [data-testid="stSidebarCollapseButton"] svg,
+    [data-testid="collapsedControl"] svg,
+    button[kind="header"] svg {
+        fill: #ffffff !important;
+        stroke: #ffffff !important;
+        color: #ffffff !important;
+    }
+
+    /* Sidebar text styling */
     [data-testid="stSidebar"] h1,
     [data-testid="stSidebar"] h2,
     [data-testid="stSidebar"] h3,
@@ -143,204 +153,217 @@ def get_css() -> str:
 
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] span,
-    [data-testid="stSidebar"] div {
-        color: #94a3b8 !important;
+    [data-testid="stSidebar"] div,
+    [data-testid="stSidebar"] label {
+        color: #334155 !important;
     }
 
     /* ============================================
-       BUTTONS - iOS Style with Depth
+       TYPOGRAPHY - High contrast
+       ============================================ */
+    h1, h2, h3, h4, h5, h6,
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
+        font-family: 'Inter', -apple-system, sans-serif !important;
+        color: #0f172a !important;
+        font-weight: 600 !important;
+        letter-spacing: -0.02em !important;
+        line-height: 1.3 !important;
+    }
+
+    h1, .stMarkdown h1 { font-size: 2rem !important; font-weight: 700 !important; }
+    h2, .stMarkdown h2 { font-size: 1.5rem !important; }
+    h3, .stMarkdown h3 { font-size: 1.25rem !important; }
+    h4, .stMarkdown h4 { font-size: 1.1rem !important; }
+
+    p, .stMarkdown p, .stMarkdown, .stText {
+        color: #334155 !important;
+        font-size: 1rem !important;
+        line-height: 1.6 !important;
+        font-family: 'Inter', -apple-system, sans-serif !important;
+    }
+
+    strong, b { color: #0f172a !important; font-weight: 600 !important; }
+    a { color: #6366f1 !important; text-decoration: none !important; }
+    a:hover { color: #4f46e5 !important; text-decoration: underline !important; }
+
+    label, .stTextInput label, .stSelectbox label {
+        color: #334155 !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+    }
+
+    /* ============================================
+       BUTTONS - Clear, readable
        ============================================ */
     .stButton > button {
         font-family: 'Inter', -apple-system, sans-serif !important;
         font-weight: 500 !important;
         font-size: 0.95rem !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         padding: 0.75rem 1.5rem !important;
-        min-height: 48px !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        border: none !important;
+        min-height: 46px !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
     }
 
-    /* Secondary button - Glass effect */
+    /* Secondary button - light gray with dark text */
     .stButton > button:not([kind="primary"]):not([data-testid="baseButton-primary"]) {
-        background: rgba(255, 255, 255, 0.05) !important;
-        backdrop-filter: blur(10px) !important;
-        -webkit-backdrop-filter: blur(10px) !important;
-        color: #ffffff !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        border: 1px solid #e2e8f0 !important;
     }
 
     .stButton > button:not([kind="primary"]):not([data-testid="baseButton-primary"]):hover {
-        background: rgba(255, 255, 255, 0.1) !important;
-        border-color: rgba(255, 255, 255, 0.15) !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        background: #e2e8f0 !important;
+        border-color: #cbd5e1 !important;
     }
 
-    /* Primary button - Gradient with glow */
+    /* Primary button - solid purple with white text */
     .stButton > button[kind="primary"],
     .stButton > button[data-testid="baseButton-primary"] {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+        background: #6366f1 !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25) !important;
     }
 
     .stButton > button[kind="primary"]:hover,
     .stButton > button[data-testid="baseButton-primary"]:hover {
-        background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%) !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
-    }
-
-    .stButton > button:active {
-        transform: translateY(0) scale(0.98) !important;
+        background: #4f46e5 !important;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35) !important;
     }
 
     /* ============================================
-       FORM INPUTS - Elegant Glass Style
+       FORM INPUTS - Clean with good contrast
        ============================================ */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea,
     .stNumberInput > div > div > input {
-        background: rgba(255, 255, 255, 0.05) !important;
-        backdrop-filter: blur(10px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-        color: #ffffff !important;
+        background: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 10px !important;
+        color: #0f172a !important;
         font-family: 'Inter', sans-serif !important;
         font-size: 1rem !important;
-        padding: 0.875rem 1rem !important;
-        transition: all 0.2s ease !important;
+        padding: 0.75rem 1rem !important;
     }
 
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
         border-color: #6366f1 !important;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 0 20px rgba(99, 102, 241, 0.15) !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
         outline: none !important;
     }
 
     .stTextInput > div > div > input::placeholder,
     .stTextArea > div > div > textarea::placeholder {
-        color: #475569 !important;
+        color: #9ca3af !important;
     }
 
     /* ============================================
-       SELECT / DROPDOWN - Glass Style
+       SELECT / DROPDOWN
        ============================================ */
     .stSelectbox > div > div,
     .stMultiSelect > div > div {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
+        background: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 10px !important;
     }
 
     .stSelectbox > div > div > div,
     .stSelectbox [data-baseweb="select"] span {
-        color: #ffffff !important;
+        color: #0f172a !important;
     }
 
-    /* Dropdown popover */
     [data-baseweb="popover"],
     [data-baseweb="menu"],
     div[role="listbox"],
     ul[role="listbox"] {
-        background: rgba(30, 30, 36, 0.95) !important;
-        backdrop-filter: blur(20px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
     }
 
     [data-baseweb="menu"] li,
     div[role="option"],
     li[role="option"] {
-        color: #ffffff !important;
+        color: #0f172a !important;
         padding: 0.75rem 1rem !important;
-        transition: background 0.15s ease !important;
     }
 
     [data-baseweb="menu"] li:hover,
     div[role="option"]:hover,
     li[role="option"]:hover {
-        background: rgba(99, 102, 241, 0.15) !important;
+        background: #f1f5f9 !important;
     }
 
     /* ============================================
-       RADIO BUTTONS - iOS Segmented Style
+       RADIO BUTTONS
        ============================================ */
-    .stRadio > div {
-        gap: 0.5rem !important;
-        flex-wrap: wrap !important;
-    }
-
     .stRadio > div > label {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 10px !important;
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
         padding: 0.75rem 1rem !important;
-        color: #94a3b8 !important;
+        color: #334155 !important;
         font-weight: 500 !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease !important;
     }
 
     .stRadio > div > label:hover {
-        background: rgba(255, 255, 255, 0.08) !important;
-        color: #ffffff !important;
+        background: #f1f5f9 !important;
     }
 
     .stRadio > div > label[data-checked="true"],
     .stRadio > div > label:has(input:checked) {
-        background: rgba(99, 102, 241, 0.2) !important;
+        background: #eef2ff !important;
         border-color: #6366f1 !important;
-        color: #ffffff !important;
-        box-shadow: 0 0 16px rgba(99, 102, 241, 0.2) !important;
+        color: #4f46e5 !important;
     }
 
     /* ============================================
-       PROGRESS BAR - Smooth Gradient
+       PROGRESS BAR
        ============================================ */
     .stProgress > div > div {
-        background: rgba(255, 255, 255, 0.1) !important;
-        border-radius: 8px !important;
+        background: #e2e8f0 !important;
+        border-radius: 6px !important;
         height: 8px !important;
     }
 
     .stProgress > div > div > div {
         background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%) !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
     }
 
     /* ============================================
-       EXPANDER - Glass Card Style
+       EXPANDER
        ============================================ */
     .streamlit-expanderHeader {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-        color: #ffffff !important;
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        color: #0f172a !important;
         font-weight: 500 !important;
     }
 
     .streamlit-expanderHeader:hover {
-        background: rgba(255, 255, 255, 0.08) !important;
+        background: #f1f5f9 !important;
     }
 
     .streamlit-expanderContent {
-        background: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
         border-top: none !important;
-        border-radius: 0 0 12px 12px !important;
+        border-radius: 0 0 10px 10px !important;
+        color: #334155 !important;
     }
 
     /* ============================================
-       TABS - iOS Segmented Control
+       TABS
        ============================================ */
     .stTabs [data-baseweb="tab-list"] {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border-radius: 12px !important;
+        background: #f1f5f9 !important;
+        border-radius: 10px !important;
         padding: 4px !important;
         gap: 4px !important;
     }
@@ -355,23 +378,23 @@ def get_css() -> str:
     }
 
     .stTabs [data-baseweb="tab"]:hover {
-        color: #ffffff !important;
+        color: #0f172a !important;
     }
 
     .stTabs [aria-selected="true"] {
-        background: rgba(99, 102, 241, 0.2) !important;
-        color: #ffffff !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
     }
 
     /* ============================================
-       ALERTS & NOTIFICATIONS
+       ALERTS
        ============================================ */
     .stAlert, div[data-testid="stAlert"] {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-        backdrop-filter: blur(10px) !important;
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        color: #334155 !important;
     }
 
     /* ============================================
@@ -379,7 +402,7 @@ def get_css() -> str:
        ============================================ */
     hr {
         border: none !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-top: 1px solid #e2e8f0 !important;
         margin: 1.5rem 0 !important;
     }
 
@@ -387,47 +410,58 @@ def get_css() -> str:
        CUSTOM COMPONENT CLASSES
        ============================================ */
 
-    /* Glass Card */
-    .glass-card {
-        background: rgba(255, 255, 255, 0.03) !important;
-        backdrop-filter: blur(20px) !important;
-        -webkit-backdrop-filter: blur(20px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 16px !important;
+    /* Card */
+    .card {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 14px !important;
         padding: 1.5rem !important;
         margin-bottom: 1rem !important;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2) !important;
         transition: all 0.2s ease !important;
     }
 
-    .glass-card:hover {
-        border-color: rgba(255, 255, 255, 0.12) !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    .card:hover {
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* Card */
-    .card {
-        background: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 16px !important;
+    .card h3, .card h4 {
+        color: #0f172a !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .card p {
+        color: #64748b !important;
+    }
+
+    /* Glass Card - subtle elevation */
+    .glass-card {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 14px !important;
         padding: 1.5rem !important;
         margin-bottom: 1rem !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    .glass-card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
     }
 
     /* Stat Card */
     .stat-card {
-        background: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 16px !important;
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
         padding: 1.25rem !important;
         text-align: center !important;
     }
 
     .stat-value {
-        font-size: 2rem !important;
+        font-size: 1.75rem !important;
         font-weight: 700 !important;
-        color: #ffffff !important;
-        line-height: 1 !important;
+        color: #0f172a !important;
+        line-height: 1.2 !important;
         margin-bottom: 0.25rem !important;
     }
 
@@ -436,45 +470,39 @@ def get_css() -> str:
         color: #64748b !important;
         text-transform: uppercase !important;
         letter-spacing: 0.05em !important;
+        font-weight: 500 !important;
     }
 
     /* Action Card */
     .action-card {
-        background: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 16px !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 14px !important;
         padding: 1.25rem !important;
         cursor: pointer !important;
         transition: all 0.2s ease !important;
     }
 
     .action-card:hover {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border-color: rgba(99, 102, 241, 0.3) !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+        border-color: #6366f1 !important;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1) !important;
     }
 
     .action-card-primary {
-        background: rgba(99, 102, 241, 0.1) !important;
-        border-color: rgba(99, 102, 241, 0.3) !important;
-    }
-
-    .action-card-primary:hover {
-        background: rgba(99, 102, 241, 0.15) !important;
-        box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2) !important;
+        background: #eef2ff !important;
+        border-color: #c7d2fe !important;
     }
 
     .action-card-title {
         font-size: 1.1rem !important;
         font-weight: 600 !important;
-        color: #ffffff !important;
+        color: #0f172a !important;
         margin-bottom: 0.25rem !important;
     }
 
     .action-card-subtitle {
         font-size: 0.9rem !important;
-        color: #94a3b8 !important;
+        color: #64748b !important;
     }
 
     /* Pills / Badges */
@@ -488,60 +516,60 @@ def get_css() -> str:
     }
 
     .pill-accent {
-        background: rgba(99, 102, 241, 0.2) !important;
-        color: #a5b4fc !important;
+        background: #eef2ff !important;
+        color: #4f46e5 !important;
     }
 
     .pill-success {
-        background: rgba(16, 185, 129, 0.2) !important;
-        color: #34d399 !important;
+        background: #d1fae5 !important;
+        color: #047857 !important;
     }
 
     .pill-warning {
-        background: rgba(245, 158, 11, 0.2) !important;
-        color: #fbbf24 !important;
+        background: #fef3c7 !important;
+        color: #b45309 !important;
     }
 
     .pill-error {
-        background: rgba(239, 68, 68, 0.2) !important;
-        color: #f87171 !important;
+        background: #fee2e2 !important;
+        color: #b91c1c !important;
     }
 
     /* Feedback Boxes */
     .feedback-box {
         padding: 1rem 1.25rem !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         margin: 1rem 0 !important;
     }
 
     .feedback-success {
-        background: rgba(16, 185, 129, 0.15) !important;
-        border: 1px solid rgba(16, 185, 129, 0.3) !important;
-        color: #34d399 !important;
+        background: #d1fae5 !important;
+        border: 1px solid #6ee7b7 !important;
+        color: #047857 !important;
     }
 
     .feedback-error {
-        background: rgba(239, 68, 68, 0.15) !important;
-        border: 1px solid rgba(239, 68, 68, 0.3) !important;
-        color: #f87171 !important;
+        background: #fee2e2 !important;
+        border: 1px solid #fca5a5 !important;
+        color: #b91c1c !important;
     }
 
     .feedback-warning {
-        background: rgba(245, 158, 11, 0.15) !important;
-        border: 1px solid rgba(245, 158, 11, 0.3) !important;
-        color: #fbbf24 !important;
+        background: #fef3c7 !important;
+        border: 1px solid #fcd34d !important;
+        color: #b45309 !important;
     }
 
     .feedback-info {
-        background: rgba(59, 130, 246, 0.15) !important;
-        border: 1px solid rgba(59, 130, 246, 0.3) !important;
-        color: #60a5fa !important;
+        background: #dbeafe !important;
+        border: 1px solid #93c5fd !important;
+        color: #1d4ed8 !important;
     }
 
     /* Exercise prompt */
     .exercise-prompt {
         font-size: 1.25rem !important;
-        color: #ffffff !important;
+        color: #0f172a !important;
         line-height: 1.6 !important;
         margin-bottom: 1rem !important;
     }
@@ -558,9 +586,9 @@ def get_css() -> str:
 
     /* Hero section */
     .hero {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%) !important;
-        border: 1px solid rgba(99, 102, 241, 0.2) !important;
-        border-radius: 20px !important;
+        background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%) !important;
+        border: 1px solid #e0e7ff !important;
+        border-radius: 16px !important;
         padding: 2rem !important;
         margin-bottom: 1.5rem !important;
     }
@@ -568,32 +596,32 @@ def get_css() -> str:
     .hero-title {
         font-size: 1.75rem !important;
         font-weight: 700 !important;
-        color: #ffffff !important;
+        color: #0f172a !important;
         margin-bottom: 0.5rem !important;
     }
 
     .hero-subtitle {
         font-size: 1rem !important;
-        color: #94a3b8 !important;
+        color: #64748b !important;
     }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
 
     /* Focus states for accessibility */
     *:focus-visible {
         outline: 2px solid #6366f1 !important;
         outline-offset: 2px !important;
     }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
     """
 
 
 def apply_theme():
-    """Apply iOS-style theme to app."""
+    """Apply theme to app."""
     st.markdown(get_css(), unsafe_allow_html=True)
 
 
@@ -691,12 +719,12 @@ def render_feedback(feedback_type: str, message: str, details: str = "") -> None
 
 
 def render_card(content: str, title: str = "") -> None:
-    """Render a glass card."""
-    title_html = f'<h4 style="margin-bottom: 12px; color: #ffffff;">{title}</h4>' if title else ''
+    """Render a card."""
+    title_html = f'<h4 style="margin-bottom: 12px; color: #0f172a;">{title}</h4>' if title else ''
     st.markdown(f"""
     <div class="glass-card">
         {title_html}
-        <div style="color: #94a3b8;">{content}</div>
+        <div style="color: #64748b;">{content}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -746,11 +774,11 @@ def render_streak_badge(streak: int) -> None:
     if streak > 0:
         st.markdown(f"""
         <div style="display: inline-flex; align-items: center; gap: 10px;
-                    background: rgba(245, 158, 11, 0.15); padding: 10px 18px;
-                    border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    background: #fef3c7; padding: 10px 18px;
+                    border-radius: 10px; border: 1px solid #fcd34d;">
             <span style="font-size: 1.5rem;">🔥</span>
-            <span style="font-size: 1.25rem; font-weight: 700; color: #fbbf24;">{streak}</span>
-            <span style="color: #94a3b8; font-size: 0.9rem;">day{'s' if streak != 1 else ''}</span>
+            <span style="font-size: 1.25rem; font-weight: 700; color: #b45309;">{streak}</span>
+            <span style="color: #92400e; font-size: 0.9rem;">day{'s' if streak != 1 else ''}</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -768,8 +796,8 @@ def render_empty_state(message: str, icon: str = "📭") -> None:
 def render_loading_skeleton(height: str = "100px") -> None:
     """Render a loading skeleton."""
     st.markdown(f"""
-    <div style="background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
-                background-size: 200% 100%; height: {height}; border-radius: 12px;
+    <div style="background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                background-size: 200% 100%; height: {height}; border-radius: 10px;
                 animation: shimmer 1.5s infinite;">
     </div>
     <style>
@@ -781,10 +809,10 @@ def render_loading_skeleton(height: str = "100px") -> None:
 def render_error_state(message: str, retry_label: str = "Try again") -> bool:
     """Render error state. Returns True if retry clicked."""
     st.markdown(f"""
-    <div style="text-align: center; padding: 2rem; background: rgba(239, 68, 68, 0.1);
-                border-radius: 16px; border: 1px solid rgba(239, 68, 68, 0.3);">
-        <p style="color: #f87171; font-size: 1.1rem;"><strong>Something went wrong</strong></p>
-        <p style="color: #f87171; opacity: 0.9;">{message}</p>
+    <div style="text-align: center; padding: 2rem; background: #fee2e2;
+                border-radius: 14px; border: 1px solid #fca5a5;">
+        <p style="color: #b91c1c; font-size: 1.1rem;"><strong>Something went wrong</strong></p>
+        <p style="color: #dc2626;">{message}</p>
     </div>
     """, unsafe_allow_html=True)
     return st.button(retry_label, type="primary")
@@ -792,25 +820,25 @@ def render_error_state(message: str, retry_label: str = "Try again") -> bool:
 
 def render_profile_card(name: str, level: str, vocab_count: int, streak: int, is_active: bool = False) -> str:
     """Render a profile card."""
-    border = 'border-color: rgba(99, 102, 241, 0.5);' if is_active else ''
+    border = 'border-color: #6366f1;' if is_active else ''
     badge = '<span class="pill pill-success">Active</span>' if is_active else ''
 
     return f"""
     <div class="glass-card" style="{border}">
         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
             <div>
-                <div style="font-weight: 600; font-size: 1.1rem; color: #ffffff;">{name}</div>
+                <div style="font-weight: 600; font-size: 1.1rem; color: #0f172a;">{name}</div>
                 <div style="font-size: 0.875rem; color: #64748b;">Level: {level}</div>
             </div>
             {badge}
         </div>
         <div style="display: flex; gap: 24px;">
             <div>
-                <div style="font-weight: 700; font-size: 1.25rem; color: #ffffff;">{vocab_count}</div>
+                <div style="font-weight: 700; font-size: 1.25rem; color: #0f172a;">{vocab_count}</div>
                 <div style="font-size: 0.75rem; color: #64748b;">Words</div>
             </div>
             <div>
-                <div style="font-weight: 700; font-size: 1.25rem; color: #fbbf24;">{streak}🔥</div>
+                <div style="font-weight: 700; font-size: 1.25rem; color: #b45309;">{streak}🔥</div>
                 <div style="font-size: 0.75rem; color: #64748b;">Streak</div>
             </div>
         </div>
@@ -821,7 +849,7 @@ def render_profile_card(name: str, level: str, vocab_count: int, streak: int, is
 def render_cloze_sentence(before: str, after: str, answer: str = "", show_answer: bool = False) -> None:
     """Render a cloze sentence with visible blank."""
     if show_answer:
-        blank = f'<span class="cloze-blank" style="color: #34d399;">{answer}</span>'
+        blank = f'<span class="cloze-blank" style="color: #047857;">{answer}</span>'
     else:
         blank = '<span class="cloze-blank">_____</span>'
 
