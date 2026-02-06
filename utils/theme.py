@@ -1,54 +1,31 @@
 """
-iPhone-style clean white design system.
-Pure white backgrounds with colorful accents.
+Clean white design system - Forces light mode aggressively.
 """
 import streamlit as st
 from textwrap import dedent
 
 
-# ============================================
-# DESIGN TOKENS - iPhone Style
-# ============================================
 COLORS = {
-    # Backgrounds - Pure white
-    "bg_base": "#FFFFFF",
-    "bg_card": "#FFFFFF",
-    "bg_elevated": "#F2F2F7",
-    "bg_grouped": "#F2F2F7",
-
-    # Text - iOS style
-    "text_primary": "#000000",
-    "text_secondary": "#3C3C43",
-    "text_tertiary": "#8E8E93",
-
-    # iOS Accent Colors
+    "bg": "#FFFFFF",
+    "text": "#1C1C1E",
+    "text_secondary": "#8E8E93",
     "blue": "#007AFF",
     "green": "#34C759",
     "orange": "#FF9500",
     "red": "#FF3B30",
-    "purple": "#AF52DE",
-    "pink": "#FF2D55",
-    "teal": "#5AC8FA",
-    "indigo": "#5856D6",
-
-    # Semantic
-    "success": "#34C759",
-    "warning": "#FF9500",
-    "error": "#FF3B30",
-    "info": "#007AFF",
-
-    # Borders
-    "separator": "#C6C6C8",
-    "border": "#E5E5EA",
+    "border": "#D1D1D6",
+    "card_bg": "#F2F2F7",
 }
 
-SPACING = {"xs": "4px", "sm": "8px", "md": "16px", "lg": "20px", "xl": "32px"}
-RADII = {"sm": "8px", "md": "12px", "lg": "16px", "xl": "22px", "full": "9999px"}
+SPACING = {"xs": "4px", "sm": "8px", "md": "16px", "lg": "24px", "xl": "32px"}
+RADII = {"sm": "8px", "md": "12px", "lg": "16px"}
 
 
 def get_css() -> str:
-    """Return iPhone-style CSS - clean white with colorful accents."""
+    """Ultra-aggressive white theme CSS with color-scheme override."""
     return """
+    <meta name="color-scheme" content="light only">
+    <meta name="theme-color" content="#FFFFFF">
     <style>
     /* ============================================
        iPHONE-STYLE DESIGN SYSTEM
@@ -73,7 +50,7 @@ def get_css() -> str:
     .stApp > div,
     .main,
     [data-testid="stAppViewContainer"],
-    [data-testid="stAppViewContainer"] > div,
+    [data-testid="stAppViewContainer"] > *,
     [data-testid="stVerticalBlock"],
     .main .block-container {
         background: linear-gradient(180deg, #0c0c0f 0%, #111118 100%) !important;
@@ -113,12 +90,19 @@ def get_css() -> str:
        ============================================ */
     [data-testid="stSidebar"],
     [data-testid="stSidebar"] > div,
-    section[data-testid="stSidebar"] {
+    [data-testid="stSidebar"] > div > div,
+    [data-testid="stSidebarContent"],
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] > div {
         background: #F2F2F7 !important;
         background-color: #F2F2F7 !important;
     }
 
-    /* Hide sidebar collapse button */
+    [data-testid="stSidebar"] * {
+        color: #1C1C1E !important;
+    }
+
+    /* Hide collapse button */
     [data-testid="stSidebarCollapseButton"],
     [data-testid="collapsedControl"],
     button[kind="header"] {
@@ -160,28 +144,13 @@ def get_css() -> str:
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
         color: #000000 !important;
         font-weight: 700 !important;
-        letter-spacing: -0.5px !important;
     }
 
-    h1, .stMarkdown h1 { font-size: 34px !important; }
-    h2, .stMarkdown h2 { font-size: 28px !important; }
-    h3, .stMarkdown h3 { font-size: 22px !important; }
-    h4, .stMarkdown h4 { font-size: 17px !important; font-weight: 600 !important; }
-
-    p, .stMarkdown p, .stText {
-        color: #3C3C43 !important;
-        font-size: 17px !important;
-        line-height: 1.5 !important;
+    p, span, label, div {
+        color: #1C1C1E !important;
     }
 
-    label {
-        color: #000000 !important;
-        font-weight: 500 !important;
-    }
-
-    /* ============================================
-       BUTTONS - iOS Style
-       ============================================ */
+    /* Buttons */
     .stButton > button {
         font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif !important;
         font-weight: 600 !important;
@@ -269,12 +238,16 @@ def get_css() -> str:
         caret-color: #e2e8f0 !important;
     }
 
-    /* ============================================
-       SELECT / DROPDOWN
-       ============================================ */
+    /* Inputs */
+    input, textarea, select,
+    .stTextInput input,
+    .stTextInput > div > div > input,
+    .stTextArea textarea,
     .stSelectbox > div > div {
         background: #FFFFFF !important;
-        border: 1px solid #C6C6C8 !important;
+        background-color: #FFFFFF !important;
+        color: #1C1C1E !important;
+        border: 1px solid #D1D1D6 !important;
         border-radius: 10px !important;
     }
 
@@ -318,140 +291,98 @@ def get_css() -> str:
         color: #0f172a !important;
     }
 
-    /* ============================================
-       RADIO BUTTONS - iOS Segmented Style
-       ============================================ */
-    .stRadio > div > label {
+    /* Cards */
+    .card, .glass-card, .stat-card, .action-card {
         background: #FFFFFF !important;
         border: 1px solid #E5E5EA !important;
-        border-radius: 10px !important;
-        padding: 12px 16px !important;
-        color: #000000 !important;
-        font-weight: 500 !important;
+        border-radius: 16px !important;
+        padding: 16px !important;
     }
 
-    .stRadio > div > label:hover {
-        background: #F2F2F7 !important;
+    .card h3, .card h4, .stat-value, .action-card-title {
+        color: #1C1C1E !important;
     }
 
-    .stRadio > div > label[data-checked="true"],
-    .stRadio > div > label:has(input:checked) {
-        background: #007AFF !important;
-        border-color: #007AFF !important;
-        color: #FFFFFF !important;
+    .card p, .stat-label, .action-card-subtitle {
+        color: #8E8E93 !important;
     }
 
-    /* ============================================
-       PROGRESS BAR - iOS Style
-       ============================================ */
-    .stProgress > div > div {
-        background: #E5E5EA !important;
-        border-radius: 4px !important;
-        height: 8px !important;
+    /* Pills */
+    .pill {
+        display: inline-block !important;
+        padding: 4px 12px !important;
+        border-radius: 20px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
     }
+    .pill-blue, .pill-accent { background: rgba(0,122,255,0.15) !important; color: #007AFF !important; }
+    .pill-green, .pill-success { background: rgba(52,199,89,0.15) !important; color: #34C759 !important; }
+    .pill-orange, .pill-warning { background: rgba(255,149,0,0.15) !important; color: #FF9500 !important; }
+    .pill-red, .pill-error { background: rgba(255,59,48,0.15) !important; color: #FF3B30 !important; }
 
-    .stProgress > div > div > div {
-        background: linear-gradient(90deg, #007AFF, #5AC8FA) !important;
-        border-radius: 4px !important;
+    /* Feedback boxes */
+    .feedback-success { background: rgba(52,199,89,0.15) !important; color: #248A3D !important; border-radius: 12px !important; padding: 16px !important; }
+    .feedback-error { background: rgba(255,59,48,0.15) !important; color: #D70015 !important; border-radius: 12px !important; padding: 16px !important; }
+    .feedback-warning { background: rgba(255,149,0,0.15) !important; color: #C93400 !important; border-radius: 12px !important; padding: 16px !important; }
+    .feedback-info { background: rgba(0,122,255,0.15) !important; color: #0040DD !important; border-radius: 12px !important; padding: 16px !important; }
+
+    /* Hero */
+    .hero {
+        background: linear-gradient(135deg, rgba(0,122,255,0.1), rgba(90,200,250,0.1)) !important;
+        border-radius: 20px !important;
+        padding: 24px !important;
     }
+    .hero-title { color: #1C1C1E !important; font-size: 28px !important; font-weight: 700 !important; }
+    .hero-subtitle { color: #8E8E93 !important; }
 
-    /* ============================================
-       TABS - iOS Segmented Control
-       ============================================ */
+    /* Tabs */
     .stTabs [data-baseweb="tab-list"] {
         background: #F2F2F7 !important;
         border-radius: 10px !important;
-        padding: 2px !important;
-        gap: 2px !important;
+        padding: 4px !important;
     }
-
     .stTabs [data-baseweb="tab"] {
         background: transparent !important;
         color: #8E8E93 !important;
-        border-radius: 8px !important;
-        font-weight: 500 !important;
-        border: none !important;
     }
-
-    .stTabs [data-baseweb="tab"]:hover {
-        color: #000000 !important;
-    }
-
     .stTabs [aria-selected="true"] {
         background: #FFFFFF !important;
-        color: #000000 !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        color: #1C1C1E !important;
     }
 
-    /* ============================================
-       EXPANDER
-       ============================================ */
+    /* Radio buttons */
+    .stRadio label {
+        background: #FFFFFF !important;
+        border: 1px solid #E5E5EA !important;
+        border-radius: 10px !important;
+        padding: 12px !important;
+        color: #1C1C1E !important;
+    }
+
+    /* Alerts */
+    .stAlert, [data-testid="stAlert"] {
+        background: #F2F2F7 !important;
+        border-radius: 12px !important;
+        color: #1C1C1E !important;
+    }
+
+    /* Hide Streamlit branding */
+    #MainMenu, footer, [data-testid="stToolbar"], header[data-testid="stHeader"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* Expander */
     .streamlit-expanderHeader {
         background: #FFFFFF !important;
-        border: 1px solid #E5E5EA !important;
-        border-radius: 12px !important;
-        color: #000000 !important;
+        color: #1C1C1E !important;
     }
-
     .streamlit-expanderContent {
         background: #FFFFFF !important;
-        border: 1px solid #E5E5EA !important;
-        border-top: none !important;
-        border-radius: 0 0 12px 12px !important;
     }
 
-    /* ============================================
-       ALERTS
-       ============================================ */
-    .stAlert, div[data-testid="stAlert"] {
-        background: #F2F2F7 !important;
-        border: none !important;
-        border-radius: 12px !important;
-        color: #000000 !important;
-    }
-
-    /* ============================================
-       DIVIDER
-       ============================================ */
-    hr {
-        border: none !important;
-        border-top: 1px solid #E5E5EA !important;
-        margin: 20px 0 !important;
-    }
-
-    /* ============================================
-       CUSTOM CARD CLASSES - iOS Style
-       ============================================ */
-    .card {
-        background: #FFFFFF !important;
-        border: 1px solid #E5E5EA !important;
-        border-radius: 16px !important;
-        padding: 16px !important;
-        margin-bottom: 12px !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
-    }
-
-    .card h3, .card h4 {
-        color: #000000 !important;
-        margin-bottom: 8px !important;
-    }
-
-    .card p {
-        color: #8E8E93 !important;
-        margin: 0 !important;
-        font-size: 15px !important;
-    }
-
-    .glass-card {
-        background: #FFFFFF !important;
-        border: 1px solid #E5E5EA !important;
-        border-radius: 16px !important;
-        padding: 16px !important;
-        margin-bottom: 12px !important;
-    }
-
-    /* Stat cards */
-    .stat-card {
+    /* Dropdown menus */
+    [data-baseweb="popover"], [data-baseweb="menu"], [role="listbox"] {
         background: #FFFFFF !important;
         border: 1px solid #E5E5EA !important;
         border-radius: 16px !important;
@@ -499,61 +430,6 @@ def get_css() -> str:
     /* Action Card */
     .action-card {
         background: #FFFFFF !important;
-        border: 1px solid #E5E5EA !important;
-        border-radius: 16px !important;
-        padding: 16px !important;
-    }
-
-    .action-card-title {
-        font-weight: 600 !important;
-        color: #000000 !important;
-        font-size: 17px !important;
-    }
-
-    .action-card-subtitle {
-        color: #8E8E93 !important;
-        font-size: 15px !important;
-    }
-
-    /* Pills/badges - Colorful */
-    .pill {
-        display: inline-block !important;
-        padding: 4px 12px !important;
-        border-radius: 20px !important;
-        font-size: 13px !important;
-        font-weight: 600 !important;
-    }
-
-    .pill-accent, .pill-blue {
-        background: rgba(0, 122, 255, 0.12) !important;
-        color: #007AFF !important;
-    }
-
-    .pill-success, .pill-green {
-        background: rgba(52, 199, 89, 0.12) !important;
-        color: #34C759 !important;
-    }
-
-    .pill-warning, .pill-orange {
-        background: rgba(255, 149, 0, 0.12) !important;
-        color: #FF9500 !important;
-    }
-
-    .pill-error, .pill-red {
-        background: rgba(255, 59, 48, 0.12) !important;
-        color: #FF3B30 !important;
-    }
-
-    .pill-purple {
-        background: rgba(175, 82, 222, 0.12) !important;
-        color: #AF52DE !important;
-    }
-
-    /* Feedback boxes */
-    .feedback-box {
-        padding: 16px !important;
-        border-radius: 12px !important;
-        margin: 12px 0 !important;
     }
 
     .feedback-success {
@@ -620,18 +496,12 @@ def get_css() -> str:
         visibility: hidden !important;
         display: none !important;
     }
-
-    /* Scrollbar - minimal */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #C6C6C8; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #8E8E93; }
     </style>
     """
 
 
 def apply_theme():
-    """Apply theme to app."""
+    """Apply theme."""
     st.markdown(get_css(), unsafe_allow_html=True)
 
 
@@ -650,7 +520,6 @@ def render_html(markup: str) -> None:
 # ============================================
 
 def render_hero(title: str, subtitle: str = "", pills: list = None) -> None:
-    """Render a hero section."""
     pills_html = ""
     if pills:
         pills_html = '<div style="margin-bottom: 12px;">' + ' '.join(
@@ -667,7 +536,6 @@ def render_hero(title: str, subtitle: str = "", pills: list = None) -> None:
 
 
 def render_section_header(title: str, action_label: str = None, action_key: str = None) -> bool:
-    """Render section header. Returns True if action clicked."""
     clicked = False
     if action_label and action_key:
         col1, col2 = st.columns([3, 1])
@@ -693,7 +561,6 @@ def render_metric_card(value: str, label: str, icon: str = "", color: str = "#00
 
 
 def render_metric_grid(metrics: list) -> None:
-    """Render a grid of metric cards."""
     cols = st.columns(len(metrics))
     for col, m in zip(cols, metrics):
         with col:
@@ -706,7 +573,6 @@ def render_metric_grid(metrics: list) -> None:
 
 
 def render_progress_bar(current: int, total: int, label: str = "") -> None:
-    """Render a progress bar with optional label."""
     if label:
         st.caption(label)
     progress = current / total if total > 0 else 0
@@ -714,7 +580,6 @@ def render_progress_bar(current: int, total: int, label: str = "") -> None:
 
 
 def render_domain_coverage(domains: dict) -> None:
-    """Render domain coverage visualization."""
     for domain, coverage in domains.items():
         col1, col2 = st.columns([3, 1])
         with col1:
@@ -724,8 +589,14 @@ def render_domain_coverage(domains: dict) -> None:
 
 
 def render_pill(text: str, variant: str = "blue") -> str:
-    """Return HTML for a pill badge."""
-    return f'<span class="pill pill-{variant}">{text}</span>'
+    colors = {
+        "blue": ("#007AFF", "rgba(0,122,255,0.15)"),
+        "green": ("#34C759", "rgba(52,199,89,0.15)"),
+        "orange": ("#FF9500", "rgba(255,149,0,0.15)"),
+        "red": ("#FF3B30", "rgba(255,59,48,0.15)"),
+    }
+    fg, bg = colors.get(variant, colors["blue"])
+    return f'<span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; background: {bg}; color: {fg};">{text}</span>'
 
 
 def render_feedback(feedback_type: str, message: str, details: str = "") -> None:
@@ -751,7 +622,6 @@ def render_card(content: str, title: str = "") -> None:
 
 
 def render_quick_actions(actions: list) -> None:
-    """Render quick action buttons."""
     cols = st.columns(len(actions))
     for col, action in zip(cols, actions):
         with col:
@@ -766,14 +636,12 @@ def render_quick_actions(actions: list) -> None:
 
 
 def render_stat_card(value: str, label: str, icon: str = "", color: str = "#007AFF") -> None:
-    """Render a stat card directly."""
     st.markdown(render_metric_card(value, label, icon, color), unsafe_allow_html=True)
 
 
 def render_action_card(title: str, subtitle: str, meta: str = "", primary: bool = False, icon: str = "") -> None:
-    """Render an action card."""
-    bg_color = "rgba(0, 122, 255, 0.08)" if primary else "#FFFFFF"
-    border_color = "#007AFF" if primary else "#E5E5EA"
+    bg = "rgba(0,122,255,0.1)" if primary else "#FFFFFF"
+    border = "#007AFF" if primary else "#E5E5EA"
     icon_html = f'<span style="font-size: 32px; margin-right: 16px;">{icon}</span>' if icon else ''
     meta_html = f'<div style="font-size: 13px; color: #8E8E93; margin-top: 4px;">{meta}</div>' if meta else ''
 
@@ -792,7 +660,6 @@ def render_action_card(title: str, subtitle: str, meta: str = "", primary: bool 
 
 
 def render_streak_badge(streak: int) -> None:
-    """Render a streak badge."""
     if streak > 0:
         render_html(f"""
             <div style="display: inline-flex; align-items: center; gap: 10px;
@@ -869,9 +736,8 @@ def render_profile_card(name: str, level: str, vocab_count: int, streak: int, is
 
 
 def render_cloze_sentence(before: str, after: str, answer: str = "", show_answer: bool = False) -> None:
-    """Render a cloze sentence with visible blank."""
     if show_answer:
-        blank = f'<span class="cloze-blank" style="color: #34C759;">{answer}</span>'
+        blank = f'<span style="border-bottom: 2px solid #34C759; color: #34C759; padding: 0 8px;">{answer}</span>'
     else:
         blank = '<span class="cloze-blank">_____</span>'
 
@@ -883,7 +749,6 @@ def render_cloze_sentence(before: str, after: str, answer: str = "", show_answer
 
 
 def render_exercise_feedback(correct: bool, correct_answer: str, explanation: str = "", common_mistake: str = "") -> None:
-    """Render exercise feedback."""
     if correct:
         render_html(f"""
             <div class="feedback-box feedback-success">
@@ -904,19 +769,13 @@ def render_exercise_feedback(correct: bool, correct_answer: str, explanation: st
 
 
 def get_design_system():
-    """Return design tokens."""
     return {"colors": COLORS, "spacing": SPACING, "radii": RADII}
 
 
-# ============================================
-# EXERCISE HELPERS
-# ============================================
-
+# Exercise helpers
 def validate_exercise(exercise: dict) -> dict:
-    """Validate exercise data."""
     errors = []
     ex_type = exercise.get("type", "")
-
     if ex_type == "cloze":
         if "before" not in exercise or "after" not in exercise:
             errors.append("Cloze must have 'before' and 'after'")
@@ -925,15 +784,12 @@ def validate_exercise(exercise: dict) -> dict:
     elif ex_type == "mcq":
         if not exercise.get("choices") or len(exercise.get("choices", [])) < 2:
             errors.append("MCQ must have at least 2 choices")
-
     if not exercise.get("type"):
         errors.append("Exercise must have a type")
-
     return {"valid": len(errors) == 0, "errors": errors}
 
 
 def get_instruction_for_type(ex_type: str) -> str:
-    """Get instruction text for exercise type."""
     return {
         "cloze": "Fill in the blank with the correct word",
         "mcq": "Choose the correct answer",
@@ -943,32 +799,24 @@ def get_instruction_for_type(ex_type: str) -> str:
 
 
 def normalize_spanish_answer(text: str, strict_accents: bool = False) -> str:
-    """Normalize Spanish text for comparison."""
     import re
     text = text.strip().lower()
     text = ' '.join(text.split())
     text = re.sub(r'[^\w\sáéíóúüñ]', '', text)
-
     if not strict_accents:
         text = text.replace('á', 'a').replace('é', 'e').replace('í', 'i')
         text = text.replace('ó', 'o').replace('ú', 'u').replace('ü', 'u')
-
     return text
 
 
 def check_answer(user_answer: str, correct_answers: list, strict_accents: bool = False) -> dict:
-    """Check user's answer against correct answers."""
     user_norm = normalize_spanish_answer(user_answer, strict_accents=True)
     user_fold = normalize_spanish_answer(user_answer, strict_accents=False)
-
     for answer in correct_answers:
         ans_norm = normalize_spanish_answer(answer, strict_accents=True)
         ans_fold = normalize_spanish_answer(answer, strict_accents=False)
-
         if user_norm == ans_norm:
             return {"result": "correct", "matched": answer, "feedback": ""}
-
         if user_fold == ans_fold:
             return {"result": "almost", "matched": answer, "feedback": f"Watch the accents: {answer}"}
-
     return {"result": "incorrect", "matched": None, "feedback": f"Correct answer: {correct_answers[0]}"}
