@@ -1237,7 +1237,7 @@ def render_conversation():
 
     st.markdown(f"""
     <div style="background: {formality_bg}; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
-        <span style="font-size: 1.2rem; font-weight: bold; background: rgba(0,0,0,0.1); padding: 0.25rem 0.5rem; border-radius: 4px;">{formality_icon}</span>
+        <span style="font-size: 1.2rem; font-weight: bold; background: rgba(0, 122, 255, 0.15); color: #007AFF; padding: 0.25rem 0.5rem; border-radius: 4px;">{formality_icon}</span>
         <div>
             <strong>{formality.title()} Register</strong> - {relationship_label}
             <br><span style="font-size: 0.85rem; opacity: 0.8;">{register_tips}</span>

@@ -993,9 +993,9 @@ def process_mission_response(mission: dict, response: str, duration: int = 0):
         icon = "check" if fb["met"] else "x"
         color = "#10b981" if fb["met"] else "#ef4444"
         st.markdown(f"""
-        <div style="padding: 0.5rem; margin: 0.25rem 0; border-left: 3px solid {color}; background: rgba(0,0,0,0.02);">
+        <div style="padding: 0.5rem; margin: 0.25rem 0; border-left: 3px solid {color}; background: #FAFAFA;">
             <strong style="color: {color};">{'[OK]' if fb['met'] else '[X]'}</strong> {fb['constraint']}<br>
-            <small style="color: #666;">{fb['details']}</small>
+            <small style="color: #6B7280;">{fb['details']}</small>
         </div>
         """, unsafe_allow_html=True)
 
