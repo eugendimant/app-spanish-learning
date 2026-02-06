@@ -3,6 +3,7 @@ iPhone-style clean white design system.
 Pure white backgrounds with colorful accents.
 """
 import streamlit as st
+from textwrap import dedent
 
 
 # ============================================
@@ -53,29 +54,58 @@ def get_css() -> str:
        iPHONE-STYLE DESIGN SYSTEM
        Pure White • Colorful Accents • Clean
        ============================================ */
-
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-    /* ============================================
-       FORCE WHITE BACKGROUND EVERYWHERE
-       ============================================ */
-    html, body, .stApp, .main,
+    :root {
+        --bg-surface: rgba(255, 255, 255, 0.03);
+        --bg-elevated: rgba(255, 255, 255, 0.06);
+        --surface: rgba(255, 255, 255, 0.03);
+        --border: rgba(255, 255, 255, 0.08);
+        --primary: #6366f1;
+        --accent: #6366f1;
+        --accent-muted: rgba(99, 102, 241, 0.15);
+        --text-primary: #ffffff;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --error: #ef4444;
+    }
+    .stApp,
+    .stApp > div,
+    .main,
     [data-testid="stAppViewContainer"],
     [data-testid="stAppViewContainer"] > div,
     [data-testid="stVerticalBlock"],
-    .main .block-container,
-    [data-testid="stAppViewBlockContainer"],
-    .stApp > header,
-    div[data-testid="stDecoration"],
-    section[data-testid="stSidebar"],
-    section[data-testid="stSidebar"] > div {
-        background: #FFFFFF !important;
-        background-color: #FFFFFF !important;
+    .main .block-container {
+        background: linear-gradient(180deg, #0c0c0f 0%, #111118 100%) !important;
+        color: #ffffff !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif, 'Apple Color Emoji',
+            'Segoe UI Emoji', 'Noto Color Emoji' !important;
     }
 
-    .main .block-container {
-        padding: 2rem 2rem 4rem 2rem !important;
-        max-width: 1100px !important;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    /* Hide Streamlit branding */
+    footer,
+    #MainMenu,
+    .stDeployButton,
+    [data-testid="stToolbar"] {
+        display: none !important;
+    }
+
+    /* Keep header for sidebar toggle, but make it subtle */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        border-bottom: none !important;
+        height: 2.5rem !important;
+    }
+
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapsedControl"] > button,
+    [data-testid="collapsedControl"],
+    [data-testid="collapsedControl"] > button {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        color: #ffffff !important;
     }
 
     /* ============================================
@@ -111,6 +141,11 @@ def get_css() -> str:
     [data-testid="stSidebar"] div,
     [data-testid="stSidebar"] label {
         color: #000000 !important;
+    }
+
+    /* Hide default Streamlit pages navigation (use custom nav) */
+    [data-testid="stSidebarNav"] {
+        display: none !important;
     }
 
     /* ============================================
@@ -171,13 +206,26 @@ def get_css() -> str:
     /* Primary button - iOS Blue */
     .stButton > button[kind="primary"],
     .stButton > button[data-testid="baseButton-primary"] {
-        background: #007AFF !important;
-        color: #FFFFFF !important;
+        background-color: #6366f1 !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
     }
 
     .stButton > button[kind="primary"]:hover,
     .stButton > button[data-testid="baseButton-primary"]:hover {
-        background: #0056B3 !important;
+        background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .stButton > button:disabled {
+        color: #cbd5f5 !important;
+        opacity: 0.6 !important;
+    }
+
+    .stButton > button:active {
+        transform: translateY(0) scale(0.98) !important;
     }
 
     /* ============================================
@@ -185,24 +233,40 @@ def get_css() -> str:
        ============================================ */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea,
-    .stNumberInput > div > div > input {
-        background: #FFFFFF !important;
-        color: #000000 !important;
-        border: 1px solid #C6C6C8 !important;
-        border-radius: 10px !important;
-        font-size: 17px !important;
-        padding: 12px 16px !important;
+    .stNumberInput > div > div > input,
+    div[data-baseweb="input"] input,
+    div[data-baseweb="textarea"] textarea {
+        background: rgba(15, 15, 20, 0.9) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(148, 163, 184, 0.25) !important;
+        border-radius: 12px !important;
+        color: #e2e8f0 !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 1rem !important;
+        padding: 0.75rem 1rem !important;
     }
 
     .stTextInput > div > div > input:focus,
-    .stTextArea > div > div > textarea:focus {
-        border-color: #007AFF !important;
-        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2) !important;
+    .stTextArea > div > div > textarea:focus,
+    div[data-baseweb="input"] input:focus,
+    div[data-baseweb="textarea"] textarea:focus {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+        outline: none !important;
     }
 
     .stTextInput > div > div > input::placeholder,
-    .stTextArea > div > div > textarea::placeholder {
-        color: #C7C7CC !important;
+    .stTextArea > div > div > textarea::placeholder,
+    div[data-baseweb="input"] input::placeholder,
+    div[data-baseweb="textarea"] textarea::placeholder {
+        color: #64748b !important;
+    }
+
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    div[data-baseweb="input"] input,
+    div[data-baseweb="textarea"] textarea {
+        caret-color: #e2e8f0 !important;
     }
 
     /* ============================================
@@ -214,28 +278,44 @@ def get_css() -> str:
         border-radius: 10px !important;
     }
 
-    .stSelectbox > div > div > div,
-    .stSelectbox [data-baseweb="select"] span {
-        color: #000000 !important;
+    /* Radio buttons - make selection obvious */
+    div[role="radiogroup"] input[type="radio"] {
+        accent-color: #6366f1 !important;
     }
 
+    div[role="radiogroup"] label[data-baseweb="radio"] {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
+        padding: 8px 12px !important;
+        margin-right: 8px !important;
+    }
+
+    div[role="radiogroup"] label[data-baseweb="radio"][aria-checked="true"] {
+        background: rgba(99, 102, 241, 0.2) !important;
+        border-color: rgba(99, 102, 241, 0.6) !important;
+    }
+
+    div[role="radiogroup"] label[data-baseweb="radio"] span {
+        color: #e2e8f0 !important;
+        font-weight: 500 !important;
+    }
+
+    /* Dropdown popover */
     [data-baseweb="popover"],
     [data-baseweb="menu"],
-    div[role="listbox"] {
-        background: #FFFFFF !important;
-        border: 1px solid #E5E5EA !important;
-        border-radius: 12px !important;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.12) !important;
+    div[role="listbox"],
+    ul[role="listbox"] {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
     }
 
     [data-baseweb="menu"] li,
-    div[role="option"] {
-        color: #000000 !important;
-    }
-
-    [data-baseweb="menu"] li:hover,
-    div[role="option"]:hover {
-        background: #F2F2F7 !important;
+    div[role="option"],
+    li[role="option"] {
+        color: #0f172a !important;
     }
 
     /* ============================================
@@ -379,10 +459,26 @@ def get_css() -> str:
         text-align: center !important;
     }
 
+    .metric-card {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 16px !important;
+        padding: 1.25rem !important;
+        text-align: center !important;
+    }
+
     .stat-value {
         font-size: 34px !important;
         font-weight: 700 !important;
         color: #000000 !important;
+    }
+
+    .metric-value {
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        line-height: 1 !important;
+        margin-bottom: 0.25rem !important;
     }
 
     .stat-label {
@@ -393,7 +489,14 @@ def get_css() -> str:
         font-weight: 600 !important;
     }
 
-    /* Action cards */
+    .metric-label {
+        font-size: 0.8rem !important;
+        color: #64748b !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }
+
+    /* Action Card */
     .action-card {
         background: #FFFFFF !important;
         border: 1px solid #E5E5EA !important;
@@ -493,20 +596,23 @@ def get_css() -> str:
         font-size: 17px !important;
     }
 
-    /* Exercise elements */
-    .exercise-prompt {
-        font-size: 20px !important;
-        color: #000000 !important;
-        line-height: 1.5 !important;
+    .emoji-flag {
+        width: 52px;
+        height: 52px;
+        display: inline-block;
+        margin-bottom: 16px;
     }
 
-    .cloze-blank {
-        display: inline-block !important;
-        min-width: 80px !important;
-        border-bottom: 2px solid #007AFF !important;
-        color: #007AFF !important;
-        text-align: center !important;
-        margin: 0 4px !important;
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+
+    /* Focus states for accessibility */
+    *:focus-visible {
+        outline: 2px solid #6366f1 !important;
+        outline-offset: 2px !important;
     }
 
     /* Hide Streamlit elements */
@@ -529,6 +635,16 @@ def apply_theme():
     st.markdown(get_css(), unsafe_allow_html=True)
 
 
+def _clean_html(markup: str) -> str:
+    """Normalize HTML markup to avoid markdown code blocks."""
+    return dedent(markup).strip()
+
+
+def render_html(markup: str) -> None:
+    """Render HTML with consistent formatting."""
+    st.markdown(_clean_html(markup), unsafe_allow_html=True)
+
+
 # ============================================
 # COMPONENT FUNCTIONS
 # ============================================
@@ -541,13 +657,13 @@ def render_hero(title: str, subtitle: str = "", pills: list = None) -> None:
             f'<span class="pill pill-blue">{p}</span>' for p in pills
         ) + '</div>'
 
-    st.markdown(f"""
-    <div class="hero">
-        {pills_html}
-        <div class="hero-title">{title}</div>
-        <div class="hero-subtitle">{subtitle}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div class="hero">
+            {pills_html}
+            <div class="hero-title">{title}</div>
+            <div class="hero-subtitle">{subtitle}</div>
+        </div>
+    """)
 
 
 def render_section_header(title: str, action_label: str = None, action_key: str = None) -> bool:
@@ -566,14 +682,14 @@ def render_section_header(title: str, action_label: str = None, action_key: str 
 
 def render_metric_card(value: str, label: str, icon: str = "", color: str = "#007AFF") -> str:
     """Return HTML for a metric card."""
-    icon_html = f'<div style="font-size: 28px; margin-bottom: 8px;">{icon}</div>' if icon else ''
-    return f"""
-    <div class="stat-card">
-        {icon_html}
-        <div class="stat-value" style="color: {color};">{value}</div>
-        <div class="stat-label">{label}</div>
-    </div>
-    """
+    icon_html = f'<div style="font-size: 24px; margin-bottom: 8px;">{icon}</div>' if icon else ''
+    return _clean_html(f"""
+        <div class="stat-card">
+            {icon_html}
+            <div class="stat-value">{value}</div>
+            <div class="stat-label">{label}</div>
+        </div>
+    """)
 
 
 def render_metric_grid(metrics: list) -> None:
@@ -614,24 +730,24 @@ def render_pill(text: str, variant: str = "blue") -> str:
 
 def render_feedback(feedback_type: str, message: str, details: str = "") -> None:
     """Render a feedback box."""
-    details_html = f'<div style="margin-top: 8px;">{details}</div>' if details else ''
-    st.markdown(f"""
-    <div class="feedback-box feedback-{feedback_type}">
-        <strong>{message}</strong>
-        {details_html}
-    </div>
-    """, unsafe_allow_html=True)
+    details_html = f'<div style="margin-top: 8px; opacity: 0.9;">{details}</div>' if details else ''
+    render_html(f"""
+        <div class="feedback-box feedback-{feedback_type}">
+            <strong>{message}</strong>
+            {details_html}
+        </div>
+    """)
 
 
 def render_card(content: str, title: str = "") -> None:
-    """Render a card."""
-    title_html = f'<h4 style="margin-bottom: 10px; color: #000000;">{title}</h4>' if title else ''
-    st.markdown(f"""
-    <div class="glass-card">
-        {title_html}
-        <div style="color: #8E8E93;">{content}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    """Render a glass card."""
+    title_html = f'<h4 style="margin-bottom: 12px; color: #ffffff;">{title}</h4>' if title else ''
+    render_html(f"""
+        <div class="glass-card">
+            {title_html}
+            <div style="color: #94a3b8;">{content}</div>
+        </div>
+    """)
 
 
 def render_quick_actions(actions: list) -> None:
@@ -661,67 +777,66 @@ def render_action_card(title: str, subtitle: str, meta: str = "", primary: bool 
     icon_html = f'<span style="font-size: 32px; margin-right: 16px;">{icon}</span>' if icon else ''
     meta_html = f'<div style="font-size: 13px; color: #8E8E93; margin-top: 4px;">{meta}</div>' if meta else ''
 
-    st.markdown(f"""
-    <div style="background: {bg_color}; border: 1px solid {border_color};
-                border-radius: 16px; padding: 16px; margin-bottom: 12px;">
-        <div style="display: flex; align-items: center;">
-            {icon_html}
-            <div>
-                <div style="font-weight: 600; color: #000000; font-size: 17px;">{title}</div>
-                <div style="color: #8E8E93; font-size: 15px;">{subtitle}</div>
-                {meta_html}
+    render_html(f"""
+        <div class="action-card {primary_class}">
+            <div style="display: flex; align-items: flex-start;">
+                {icon_html}
+                <div>
+                    <div class="action-card-title">{title}</div>
+                    <div class="action-card-subtitle">{subtitle}</div>
+                    {meta_html}
+                </div>
             </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+    """)
 
 
 def render_streak_badge(streak: int) -> None:
     """Render a streak badge."""
     if streak > 0:
-        st.markdown(f"""
-        <div style="display: inline-flex; align-items: center; gap: 8px;
-                    background: rgba(255, 149, 0, 0.12); padding: 10px 16px;
-                    border-radius: 12px;">
-            <span style="font-size: 24px;">🔥</span>
-            <span style="font-size: 22px; font-weight: 700; color: #FF9500;">{streak}</span>
-            <span style="color: #8E8E93; font-size: 15px;">day{'s' if streak != 1 else ''}</span>
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(f"""
+            <div style="display: inline-flex; align-items: center; gap: 10px;
+                        background: rgba(245, 158, 11, 0.15); padding: 10px 18px;
+                        border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.3);">
+                <span style="font-size: 1.5rem;">🔥</span>
+                <span style="font-size: 1.25rem; font-weight: 700; color: #fbbf24;">{streak}</span>
+                <span style="color: #94a3b8; font-size: 0.9rem;">day{'s' if streak != 1 else ''}</span>
+            </div>
+        """)
 
 
 def render_empty_state(message: str, icon: str = "📭") -> None:
     """Render an empty state."""
-    st.markdown(f"""
-    <div style="text-align: center; padding: 40px 20px;">
-        <div style="font-size: 48px; margin-bottom: 12px;">{icon}</div>
-        <p style="color: #8E8E93; font-size: 17px;">{message}</p>
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div style="text-align: center; padding: 3rem 1rem; color: #64748b;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">{icon}</div>
+            <p style="color: #64748b;">{message}</p>
+        </div>
+    """)
 
 
 def render_loading_skeleton(height: str = "100px") -> None:
     """Render a loading skeleton."""
-    st.markdown(f"""
-    <div style="background: linear-gradient(90deg, #F2F2F7 25%, #E5E5EA 50%, #F2F2F7 75%);
-                background-size: 200% 100%; height: {height}; border-radius: 12px;
-                animation: shimmer 1.5s infinite;">
-    </div>
-    <style>
-    @keyframes shimmer {{ 0% {{ background-position: 200% 0; }} 100% {{ background-position: -200% 0; }} }}
-    </style>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div style="background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+                    background-size: 200% 100%; height: {height}; border-radius: 12px;
+                    animation: shimmer 1.5s infinite;">
+        </div>
+        <style>
+        @keyframes shimmer {{ 0% {{ background-position: 200% 0; }} 100% {{ background-position: -200% 0; }} }}
+        </style>
+    """)
 
 
 def render_error_state(message: str, retry_label: str = "Try again") -> bool:
     """Render error state. Returns True if retry clicked."""
-    st.markdown(f"""
-    <div style="text-align: center; padding: 24px; background: rgba(255, 59, 48, 0.12);
-                border-radius: 16px;">
-        <p style="color: #FF3B30; font-size: 17px;"><strong>Something went wrong</strong></p>
-        <p style="color: #8E8E93;">{message}</p>
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div style="text-align: center; padding: 2rem; background: rgba(239, 68, 68, 0.1);
+                    border-radius: 16px; border: 1px solid rgba(239, 68, 68, 0.3);">
+            <p style="color: #f87171; font-size: 1.1rem;"><strong>Something went wrong</strong></p>
+            <p style="color: #f87171; opacity: 0.9;">{message}</p>
+        </div>
+    """)
     return st.button(retry_label, type="primary")
 
 
@@ -730,27 +845,27 @@ def render_profile_card(name: str, level: str, vocab_count: int, streak: int, is
     border_color = "#007AFF" if is_active else "#E5E5EA"
     badge = '<span class="pill pill-green">Active</span>' if is_active else ''
 
-    return f"""
-    <div class="glass-card" style="border-color: {border_color};">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-            <div>
-                <div style="font-weight: 600; color: #000000; font-size: 17px;">{name}</div>
-                <div style="font-size: 15px; color: #8E8E93;">Level: {level}</div>
+    return _clean_html(f"""
+        <div class="glass-card" style="{border}">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <div>
+                    <div style="font-weight: 600; font-size: 1.1rem; color: #ffffff;">{name}</div>
+                    <div style="font-size: 0.875rem; color: #64748b;">Level: {level}</div>
+                </div>
+                {badge}
             </div>
-            {badge}
+            <div style="display: flex; gap: 24px;">
+                <div>
+                    <div style="font-weight: 700; font-size: 1.25rem; color: #ffffff;">{vocab_count}</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">Words</div>
+                </div>
+                <div>
+                    <div style="font-weight: 700; font-size: 1.25rem; color: #fbbf24;">{streak}🔥</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">Streak</div>
+                </div>
+            </div>
         </div>
-        <div style="display: flex; gap: 24px;">
-            <div>
-                <div style="font-weight: 700; color: #007AFF; font-size: 20px;">{vocab_count}</div>
-                <div style="font-size: 13px; color: #8E8E93;">Words</div>
-            </div>
-            <div>
-                <div style="font-weight: 700; color: #FF9500; font-size: 20px;">{streak}🔥</div>
-                <div style="font-size: 13px; color: #8E8E93;">Streak</div>
-            </div>
-        </div>
-    </div>
-    """
+    """)
 
 
 def render_cloze_sentence(before: str, after: str, answer: str = "", show_answer: bool = False) -> None:
@@ -760,32 +875,32 @@ def render_cloze_sentence(before: str, after: str, answer: str = "", show_answer
     else:
         blank = '<span class="cloze-blank">_____</span>'
 
-    st.markdown(f"""
-    <div class="exercise-prompt">
-        {before}{blank}{after}
-    </div>
-    """, unsafe_allow_html=True)
+    render_html(f"""
+        <div class="exercise-prompt">
+            {before}{blank}{after}
+        </div>
+    """)
 
 
 def render_exercise_feedback(correct: bool, correct_answer: str, explanation: str = "", common_mistake: str = "") -> None:
     """Render exercise feedback."""
     if correct:
-        st.markdown(f"""
-        <div class="feedback-box feedback-success">
-            <strong>✓ Correct!</strong>
-            {f'<div style="margin-top: 8px;">{explanation}</div>' if explanation else ''}
-        </div>
-        """, unsafe_allow_html=True)
+        render_html(f"""
+            <div class="feedback-box feedback-success">
+                <strong>✓ Correct!</strong>
+                {f'<div style="margin-top: 8px;">{explanation}</div>' if explanation else ''}
+            </div>
+        """)
     else:
-        mistake_html = f'<div style="margin-top: 8px;"><em>Tip: {common_mistake}</em></div>' if common_mistake else ''
-        st.markdown(f"""
-        <div class="feedback-box feedback-error">
-            <strong>✗ Not quite</strong>
-            <div style="margin-top: 8px;">Correct answer: <strong>{correct_answer}</strong></div>
-            {f'<div style="margin-top: 8px;">{explanation}</div>' if explanation else ''}
-            {mistake_html}
-        </div>
-        """, unsafe_allow_html=True)
+        mistake_html = f'<div style="margin-top: 8px; opacity: 0.85;"><em>Tip: {common_mistake}</em></div>' if common_mistake else ''
+        render_html(f"""
+            <div class="feedback-box feedback-error">
+                <strong>✗ Not quite</strong>
+                <div style="margin-top: 8px;">Correct answer: <strong>{correct_answer}</strong></div>
+                {f'<div style="margin-top: 8px;">{explanation}</div>' if explanation else ''}
+                {mistake_html}
+            </div>
+        """)
 
 
 def get_design_system():
