@@ -109,55 +109,61 @@ TOOLS = {
 # ============================================
 
 def render_sidebar():
-    """Render clean, learner-focused sidebar."""
+    """Render clean, Duolingo-inspired sidebar."""
     with st.sidebar:
-        # App header
+        # App header with logo
         st.markdown("""
-        <div style="padding: 16px 0; border-bottom: 1px solid #E5E5EA; margin-bottom: 16px;">
-            <div style="font-size: 24px; font-weight: 700; color: #000000;">
-                🇪🇸 VivaLingo
-            </div>
-            <div style="font-size: 12px; color: #8E8E93;">Spanish Mastery</div>
+        <div style="padding: 20px 0; margin-bottom: 20px; text-align: center;">
+            <div style="font-size: 40px; margin-bottom: 8px;">🦉</div>
+            <div style="font-size: 24px; font-weight: 800; color: #58CC02;">VivaLingo</div>
+            <div style="font-size: 13px; color: #777777;">Master Spanish</div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Profile info
+        # Profile info with streak
         profile = get_user_profile()
         if profile.get("name"):
             streak = get_streak_days(get_progress_history())
+            streak_html = f'''
+            <div style="display: flex; align-items: center; gap: 4px; background: linear-gradient(135deg, #FF9600, #FF4B4B);
+                        color: white; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 14px;">
+                🔥 {streak}
+            </div>
+            ''' if streak > 0 else ''
+
             st.markdown(f"""
-            <div style="display: flex; align-items: center; gap: 12px; padding: 12px;
-                        background: #F2F2F7; border-radius: 8px; margin-bottom: 16px;">
-                <div style="width: 36px; height: 36px; border-radius: 50%;
-                            background: #007AFF; display: flex; align-items: center;
-                            justify-content: center; color: white; font-weight: 600;">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 16px;
+                        background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px; margin-bottom: 20px;">
+                <div style="width: 44px; height: 44px; border-radius: 50%;
+                            background: linear-gradient(135deg, #58CC02, #89E219); display: flex; align-items: center;
+                            justify-content: center; color: white; font-weight: 700; font-size: 18px;">
                     {profile['name'][0].upper()}
                 </div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 500; color: #000000;">{profile['name']}</div>
-                    <div style="font-size: 12px; color: #8E8E93;">Level {profile.get('level', 'C1')}</div>
+                    <div style="font-weight: 700; color: #3C3C3C; font-size: 16px;">{profile['name']}</div>
+                    <div style="font-size: 13px; color: #777777;">Level {profile.get('level', 'C1')}</div>
                 </div>
-                {f'<div style="font-size: 14px;">🔥 {streak}</div>' if streak > 0 else ''}
+                {streak_html}
             </div>
             """, unsafe_allow_html=True)
 
-        # Review due badge
+        # Review due notification
         vocab_due = len(get_vocab_for_review())
         errors_due = len(get_mistakes_for_review())
         total_due = vocab_due + errors_due
 
         if total_due > 0:
             st.markdown(f"""
-            <div style="background: #eef2ff; border: 1px solid rgba(99, 102, 241, 0.3);
-                        border-radius: 8px; padding: 10px 12px; margin-bottom: 16px;">
-                <div style="font-size: 13px; color: #007AFF;">
-                    <strong>{total_due}</strong> items due for review
+            <div style="background: rgba(28, 176, 246, 0.1); border: 2px solid #1CB0F6;
+                        border-radius: 12px; padding: 12px 16px; margin-bottom: 20px;">
+                <div style="font-size: 14px; color: #1CB0F6; font-weight: 700;">
+                    📚 {total_due} items due for review
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-        # Main navigation
-        st.markdown("#### Navigation")
+        # Navigation buttons
+        st.markdown('<div style="margin-bottom: 8px; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Navigation</div>', unsafe_allow_html=True)
 
         for item in NAV_ITEMS:
             is_active = st.session_state.current_page == item["page"]
@@ -170,11 +176,11 @@ def render_sidebar():
                 st.session_state.current_page = item["page"]
                 st.rerun()
 
-        # Admin tools - only show if user has admin flag (hidden for normal users)
+        # Admin tools - only show if user has admin flag
         profile = get_user_profile()
         if profile.get("is_admin"):
-            st.divider()
-            st.markdown("#### Developer")
+            st.markdown('<hr style="margin: 20px 0; border: none; border-top: 1px solid #E5E5E5;">', unsafe_allow_html=True)
+            st.markdown('<div style="margin-bottom: 8px; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Developer</div>', unsafe_allow_html=True)
             admin_pages = [
                 ("Content Ingest", "Content Ingest"),
                 ("Error Notebook", "Error Notebook"),
@@ -621,7 +627,7 @@ def render_onboarding():
 # ============================================
 
 def render_home_page():
-    """Render Today dashboard with useful modules filling the space."""
+    """Render Duolingo-style Today dashboard."""
     profile = get_user_profile()
     stats = get_total_stats()
 
@@ -631,166 +637,246 @@ def render_home_page():
     grammar_due = len(get_grammar_for_review())
     total_due = vocab_due + errors_due + grammar_due
 
-    # Greeting
+    # Get streak
+    streak = get_streak_days(get_progress_history())
+
+    # Hero greeting
     name = profile.get('name', 'there')
-    st.markdown(f"## Good to see you, {name}")
+    hour = datetime.now().hour
+    greeting = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
+
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #58CC02 0%, #89E219 100%);
+                border-radius: 20px; padding: 32px; margin-bottom: 24px; color: #FFFFFF;">
+        <h1 style="color: #FFFFFF !important; margin: 0 0 8px 0; font-size: 28px; font-weight: 800;">
+            {greeting}, {name}! 👋
+        </h1>
+        <p style="color: rgba(255,255,255,0.9) !important; margin: 0; font-size: 16px;">
+            Ready to continue your Spanish journey?
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ============================================
-    # DASHBOARD GRID: Main (60%) + Rail (40%)
+    # STATS ROW
     # ============================================
+    stat_cols = st.columns(4)
 
-    main_col, rail_col = st.columns([3, 2])
+    with stat_cols[0]:
+        st.markdown(f"""
+        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                    padding: 20px; text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 8px;">🔥</div>
+            <div style="font-size: 32px; font-weight: 800; color: #FF9600; line-height: 1;">{streak}</div>
+            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
+                        letter-spacing: 1px; margin-top: 6px;">Day Streak</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with stat_cols[1]:
+        st.markdown(f"""
+        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                    padding: 20px; text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 8px;">📚</div>
+            <div style="font-size: 32px; font-weight: 800; color: #58CC02; line-height: 1;">{stats.get('total_vocab', 0)}</div>
+            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
+                        letter-spacing: 1px; margin-top: 6px;">Words</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with stat_cols[2]:
+        weekly_goal = profile.get('weekly_goal', 5)
+        sessions_this_week = get_sessions_this_week()
+        st.markdown(f"""
+        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                    padding: 20px; text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 8px;">🎯</div>
+            <div style="font-size: 32px; font-weight: 800; color: #1CB0F6; line-height: 1;">{sessions_this_week}/{weekly_goal}</div>
+            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
+                        letter-spacing: 1px; margin-top: 6px;">Weekly Goal</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with stat_cols[3]:
+        st.markdown(f"""
+        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                    padding: 20px; text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 8px;">⭐</div>
+            <div style="font-size: 32px; font-weight: 800; color: #FFC800; line-height: 1;">{stats.get('total_xp', 0)}</div>
+            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
+                        letter-spacing: 1px; margin-top: 6px;">Total XP</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+
+    # ============================================
+    # MAIN CONTENT: Actions (60%) + Side (40%)
+    # ============================================
+    main_col, side_col = st.columns([3, 2])
 
     with main_col:
-        # ----------------------------------------
-        # CONTINUE CARD (Primary action)
-        # ----------------------------------------
+        # Continue Learning - Primary CTA
         last_page = st.session_state.get("last_session", "Topic Diversity")
 
         st.markdown(f"""
-        <div class="action-card action-card-primary" style="margin-bottom: 16px;">
+        <div style="background: linear-gradient(135deg, #1CB0F6 0%, #4CC9F0 100%);
+                    border-radius: 16px; padding: 24px; margin-bottom: 16px;">
             <div style="display: flex; align-items: center; gap: 16px;">
-                <div style="font-size: 32px;">▶️</div>
+                <div style="font-size: 40px;">▶️</div>
                 <div style="flex: 1;">
-                    <div class="action-card-title">Continue Learning</div>
-                    <div class="action-card-subtitle">Pick up where you left off</div>
+                    <div style="font-size: 20px; font-weight: 700; color: #FFFFFF;">Continue Learning</div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.9);">Pick up where you left off</div>
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("Continue", type="primary", use_container_width=True, key="btn_continue"):
+        if st.button("CONTINUE", type="primary", use_container_width=True, key="btn_continue"):
             st.session_state.current_page = last_page
+            st.session_state.last_session = last_page
             st.rerun()
 
-        # ----------------------------------------
-        # REVIEW DUE CARD
-        # ----------------------------------------
+        # Review Due Card
         if total_due > 0:
-            review_time = max(1, total_due // 2)
             st.markdown(f"""
-            <div class="action-card" style="margin-bottom: 16px; margin-top: 16px;">
+            <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                        padding: 20px; margin-top: 16px;">
                 <div style="display: flex; align-items: center; gap: 16px;">
-                    <div style="font-size: 32px;">🔄</div>
+                    <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(206, 130, 255, 0.15);
+                                display: flex; align-items: center; justify-content: center; font-size: 28px;">🔄</div>
                     <div style="flex: 1;">
-                        <div class="action-card-title">Review Due</div>
-                        <div class="action-card-subtitle">{total_due} items ready • ~{review_time} min</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #3C3C3C;">Review Due</div>
+                        <div style="font-size: 14px; color: #777777;">{total_due} items ready to review</div>
                     </div>
-                    <div style="text-align: right;">
-                        <span class="pill pill-accent">{vocab_due} vocab</span>
-                        {f'<span class="pill pill-error" style="margin-left: 4px;">{errors_due} errors</span>' if errors_due > 0 else ''}
+                    <div style="display: flex; gap: 8px;">
+                        <span style="background: rgba(88, 204, 2, 0.15); color: #58CC02; padding: 4px 12px;
+                                     border-radius: 12px; font-size: 13px; font-weight: 700;">{vocab_due} vocab</span>
+                        {f'<span style="background: rgba(255, 75, 75, 0.15); color: #FF4B4B; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 700;">{errors_due} errors</span>' if errors_due > 0 else ''}
                     </div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-            if st.button("Start Review", use_container_width=True, key="btn_review"):
+            if st.button("START REVIEW", use_container_width=True, key="btn_review"):
                 st.session_state.current_page = "Review"
                 st.rerun()
 
-        # ----------------------------------------
-        # QUICK 5 MIN SESSION
-        # ----------------------------------------
+        # Quick Practice Card
         st.markdown("""
-        <div class="action-card" style="margin-top: 16px;">
+        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                    padding: 20px; margin-top: 16px;">
             <div style="display: flex; align-items: center; gap: 16px;">
-                <div style="font-size: 32px;">⚡</div>
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(255, 200, 0, 0.15);
+                            display: flex; align-items: center; justify-content: center; font-size: 28px;">⚡</div>
                 <div style="flex: 1;">
-                    <div class="action-card-title">Quick 5 min session</div>
-                    <div class="action-card-subtitle">Mixed practice: vocab + grammar + listening</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #3C3C3C;">Quick Practice</div>
+                    <div style="font-size: 14px; color: #777777;">5 minute mixed session</div>
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("Start Quick Session", use_container_width=True, key="btn_quick"):
+        if st.button("QUICK START", use_container_width=True, key="btn_quick"):
             st.session_state.quick_session_mode = True
             st.session_state.current_page = "Review"
             st.rerun()
 
-        # ----------------------------------------
-        # RECOMMENDED NEXT
-        # ----------------------------------------
-        st.markdown("### Recommended")
+        # Practice Activities Section
+        st.markdown('<div style="margin-top: 32px; margin-bottom: 16px;"><h3 style="color: #3C3C3C; margin: 0;">Practice Activities</h3></div>', unsafe_allow_html=True)
 
-        rec_cols = st.columns(2)
-        recommendations = [
-            {"icon": "💬", "title": "Conversation Practice", "desc": "Practice speaking scenarios", "page": "Conversation"},
-            {"icon": "✍️", "title": "Writing Coach", "desc": "Get feedback on your writing", "page": "Writing Coach"},
+        activity_cols = st.columns(2)
+        activities = [
+            {"icon": "💬", "title": "Conversation", "desc": "Practice speaking", "page": "Conversation", "color": "#1CB0F6"},
+            {"icon": "✍️", "title": "Writing", "desc": "Get feedback", "page": "Writing Coach", "color": "#CE82FF"},
+            {"icon": "🔤", "title": "Vocabulary", "desc": "Learn new words", "page": "Topic Diversity", "color": "#58CC02"},
+            {"icon": "📖", "title": "Verbs", "desc": "Master conjugations", "page": "Verb Studio", "color": "#FF9600"},
         ]
 
-        for i, rec in enumerate(recommendations):
-            with rec_cols[i]:
+        for i, act in enumerate(activities):
+            with activity_cols[i % 2]:
                 st.markdown(f"""
-                <div class="card" style="text-align: center; padding: 20px;">
-                    <div style="font-size: 28px; margin-bottom: 8px;">{rec['icon']}</div>
-                    <div style="font-weight: 600; margin-bottom: 4px;">{rec['title']}</div>
-                    <div style="font-size: 13px; color: #8E8E93;">{rec['desc']}</div>
+                <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                            padding: 20px; text-align: center; margin-bottom: 12px;">
+                    <div style="width: 56px; height: 56px; border-radius: 50%; background: {act['color']}20;
+                                display: flex; align-items: center; justify-content: center; font-size: 28px;
+                                margin: 0 auto 12px auto;">{act['icon']}</div>
+                    <div style="font-weight: 700; color: #3C3C3C; margin-bottom: 4px;">{act['title']}</div>
+                    <div style="font-size: 13px; color: #777777;">{act['desc']}</div>
                 </div>
                 """, unsafe_allow_html=True)
-                if st.button("Start", key=f"rec_{i}", use_container_width=True):
-                    st.session_state.current_page = rec['page']
+                if st.button("Start", key=f"act_{i}", use_container_width=True):
+                    st.session_state.current_page = act['page']
+                    st.session_state.last_session = act['page']
                     st.rerun()
 
-    # ----------------------------------------
-    # RIGHT RAIL - Stats
-    # ----------------------------------------
-    with rail_col:
-        # Streak
-        streak = get_streak_days(get_progress_history())
-        st.markdown(f"""
-        <div class="stat-card" style="margin-bottom: 12px; text-align: center;">
-            <div style="font-size: 36px; margin-bottom: 4px;">🔥</div>
-            <div class="stat-value">{streak}</div>
-            <div class="stat-label">Day Streak</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Weekly goal
-        weekly_goal = profile.get('weekly_goal', 6)
+    # ============================================
+    # SIDE COLUMN - Focus Areas & Tips
+    # ============================================
+    with side_col:
+        # Weekly Progress
+        weekly_goal = profile.get('weekly_goal', 5)
         sessions_this_week = get_sessions_this_week()
-        progress_pct = sessions_this_week / weekly_goal if weekly_goal > 0 else 0
+        progress_pct = min((sessions_this_week / weekly_goal * 100), 100) if weekly_goal > 0 else 0
 
         st.markdown(f"""
-        <div class="stat-card" style="margin-bottom: 12px;">
+        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px; padding: 20px; margin-bottom: 16px;">
+            <div style="font-weight: 700; color: #3C3C3C; margin-bottom: 16px;">Weekly Progress</div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="font-weight: 500;">Weekly Goal</span>
-                <span style="color: #8E8E93;">{sessions_this_week}/{weekly_goal}</span>
+                <span style="color: #777777; font-size: 14px;">{sessions_this_week} of {weekly_goal} days</span>
+                <span style="color: #58CC02; font-weight: 700; font-size: 14px;">{progress_pct:.0f}%</span>
             </div>
-            <div style="background: #F2F2F7; height: 8px; border-radius: 4px; overflow: hidden;">
-                <div style="background: #007AFF; height: 100%; width: {progress_pct * 100}%; border-radius: 4px;"></div>
+            <div style="background: #E5E5E5; border-radius: 8px; height: 12px; overflow: hidden;">
+                <div style="background: linear-gradient(90deg, #58CC02, #89E219); height: 100%;
+                            width: {progress_pct}%; border-radius: 8px;"></div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Words learned
-        st.markdown(f"""
-        <div class="stat-card" style="margin-bottom: 12px;">
-            <div class="stat-value">{stats.get('total_vocab', 0)}</div>
-            <div class="stat-label">Words Learned</div>
-        </div>
+        # Focus Areas
+        st.markdown("""
+        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px; padding: 20px; margin-bottom: 16px;">
+            <div style="font-weight: 700; color: #3C3C3C; margin-bottom: 16px;">Focus Areas</div>
         """, unsafe_allow_html=True)
 
-        # Speaking time
-        st.markdown(f"""
-        <div class="stat-card" style="margin-bottom: 12px;">
-            <div class="stat-value">{stats.get('total_speaking', 0):.0f}</div>
-            <div class="stat-label">Minutes Speaking</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Weak areas
-        st.markdown("### Focus Areas")
         weak_areas = get_weak_areas()
         if not weak_areas:
-            weak_areas = ["Start practicing to see your focus areas"]
+            weak_areas = ["Complete exercises to see focus areas"]
+
         for area in weak_areas[:3]:
             st.markdown(f"""
-            <div style="padding: 8px 12px; background: #F2F2F7; border-radius: 6px;
-                        margin-bottom: 8px; font-size: 13px; border-left: 3px solid #f59e0b;">
-                {area}
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px;
+                        background: #F7F7F7; border-radius: 12px; margin-bottom: 8px;">
+                <div style="width: 8px; height: 8px; border-radius: 50%; background: #FF9600;"></div>
+                <div style="font-size: 14px; color: #3C3C3C;">{area}</div>
             </div>
             """, unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # Tip of the Day
+        tips = [
+            "Practice for just 5 minutes a day to build a habit!",
+            "Review mistakes right after making them for better retention.",
+            "Speaking out loud helps cement new vocabulary.",
+            "Try thinking in Spanish during everyday activities.",
+            "Write short journal entries to practice writing.",
+        ]
+        import random
+        tip = random.choice(tips)
+
+        st.markdown(f"""
+        <div style="background: rgba(28, 176, 246, 0.1); border: 2px solid #1CB0F6;
+                    border-radius: 16px; padding: 20px;">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="font-size: 24px;">💡</div>
+                <div>
+                    <div style="font-weight: 700; color: #1CB0F6; margin-bottom: 4px;">Tip of the Day</div>
+                    <div style="font-size: 14px; color: #3C3C3C; line-height: 1.5;">{tip}</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 # ============================================
@@ -798,50 +884,39 @@ def render_home_page():
 # ============================================
 
 def render_learn_page():
-    """Render Learn page with vocabulary and grammar paths."""
-    st.markdown("## Learn")
-    st.markdown("Build your vocabulary and grammar skills")
+    """Render Learn page with skill paths."""
+    # Header
+    st.markdown("""
+    <div style="margin-bottom: 32px;">
+        <h1 style="color: #3C3C3C; margin: 0 0 8px 0; font-size: 32px; font-weight: 800;">Learn</h1>
+        <p style="color: #777777; margin: 0; font-size: 16px;">Build your vocabulary and grammar skills</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
+    # Learning paths
+    paths = [
+        {"icon": "📚", "title": "Vocabulary", "desc": "Learn new words in context", "page": "Topic Diversity", "color": "#58CC02"},
+        {"icon": "🔤", "title": "Verb Mastery", "desc": "Master verb tenses and nuances", "page": "Verb Studio", "color": "#1CB0F6"},
+        {"icon": "🧩", "title": "Context Units", "desc": "Practice chunked phrases", "page": "Context Units", "color": "#CE82FF"},
+    ]
 
-    with col1:
-        st.markdown("""
-        <div class="card">
-            <div style="font-size: 32px; margin-bottom: 12px;">📚</div>
-            <h3>Vocabulary</h3>
-            <p style="color: #8E8E93;">Learn new words in context with the Topic Diversity Engine</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Start Vocabulary", type="primary", use_container_width=True, key="learn_vocab"):
-            st.session_state.current_page = "Topic Diversity"
-            st.session_state.last_session = "Topic Diversity"
-            st.rerun()
-
-    with col2:
-        st.markdown("""
-        <div class="card">
-            <div style="font-size: 32px; margin-bottom: 12px;">🔤</div>
-            <h3>Verb Mastery</h3>
-            <p style="color: #8E8E93;">Master verb nuances, tenses, and near-synonyms</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Start Verbs", type="primary", use_container_width=True, key="learn_verbs"):
-            st.session_state.current_page = "Verb Studio"
-            st.session_state.last_session = "Verb Studio"
-            st.rerun()
-
-    with col3:
-        st.markdown("""
-        <div class="card">
-            <div style="font-size: 32px; margin-bottom: 12px;">🧩</div>
-            <h3>Context Units</h3>
-            <p style="color: #8E8E93;">Practice chunked phrases and contextual grammar patterns</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Start Context Units", type="primary", use_container_width=True, key="learn_context_units"):
-            st.session_state.current_page = "Context Units"
-            st.session_state.last_session = "Context Units"
-            st.rerun()
+    cols = st.columns(3)
+    for i, path in enumerate(paths):
+        with cols[i]:
+            st.markdown(f"""
+            <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 20px;
+                        padding: 28px; text-align: center; height: 100%;">
+                <div style="width: 72px; height: 72px; border-radius: 50%; background: {path['color']}20;
+                            display: flex; align-items: center; justify-content: center; font-size: 36px;
+                            margin: 0 auto 16px auto;">{path['icon']}</div>
+                <h3 style="color: #3C3C3C; margin: 0 0 8px 0; font-size: 20px; font-weight: 700;">{path['title']}</h3>
+                <p style="color: #777777; font-size: 14px; margin: 0; line-height: 1.5;">{path['desc']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("START", type="primary", use_container_width=True, key=f"learn_{i}"):
+                st.session_state.current_page = path['page']
+                st.session_state.last_session = path['page']
+                st.rerun()
 
 
 # ============================================
@@ -849,47 +924,67 @@ def render_learn_page():
 # ============================================
 
 def render_practice_page():
-    """Render Practice page with different skill modes."""
-    st.markdown("## Practice")
-    st.markdown("Apply your skills in realistic scenarios")
+    """Render Practice page with skill modes."""
+    # Header
+    st.markdown("""
+    <div style="margin-bottom: 32px;">
+        <h1 style="color: #3C3C3C; margin: 0 0 8px 0; font-size: 32px; font-weight: 800;">Practice</h1>
+        <p style="color: #777777; margin: 0; font-size: 16px;">Apply your skills in realistic scenarios</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Practice modes
     modes = [
-        {"icon": "💬", "title": "Conversation", "desc": "Practice speaking in real scenarios", "page": "Conversation"},
-        {"icon": "✍️", "title": "Writing", "desc": "Get feedback on your written Spanish", "page": "Writing Coach"},
-        {"icon": "🔤", "title": "Verbs", "desc": "Drill verb conjugations and usage", "page": "Verb Studio"},
-        {"icon": "🎯", "title": "Quick Drills", "desc": "Fast-paced mixed practice", "page": "Topic Diversity"},
+        {"icon": "💬", "title": "Conversation", "desc": "Practice speaking in real scenarios", "page": "Conversation", "color": "#1CB0F6"},
+        {"icon": "✍️", "title": "Writing Coach", "desc": "Get feedback on your writing", "page": "Writing Coach", "color": "#CE82FF"},
+        {"icon": "🔤", "title": "Verb Drills", "desc": "Master conjugations", "page": "Verb Studio", "color": "#FF9600"},
+        {"icon": "🎯", "title": "Quick Practice", "desc": "Fast-paced mixed exercises", "page": "Topic Diversity", "color": "#58CC02"},
     ]
 
     cols = st.columns(2)
     for i, mode in enumerate(modes):
         with cols[i % 2]:
             st.markdown(f"""
-            <div class="card">
-                <div style="font-size: 28px; margin-bottom: 8px;">{mode['icon']}</div>
-                <h4>{mode['title']}</h4>
-                <p style="color: #8E8E93; font-size: 14px;">{mode['desc']}</p>
+            <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                        padding: 24px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div style="width: 56px; height: 56px; border-radius: 50%; background: {mode['color']}20;
+                                display: flex; align-items: center; justify-content: center; font-size: 28px;">
+                        {mode['icon']}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 18px; font-weight: 700; color: #3C3C3C;">{mode['title']}</div>
+                        <div style="font-size: 14px; color: #777777;">{mode['desc']}</div>
+                    </div>
+                </div>
             </div>
             """, unsafe_allow_html=True)
-            if st.button(f"Start {mode['title']}", key=f"practice_{i}", use_container_width=True):
+            if st.button(f"Start", key=f"practice_{i}", use_container_width=True):
                 st.session_state.current_page = mode['page']
                 st.session_state.last_session = mode['page']
                 st.rerun()
 
     # Tools section
-    st.divider()
-    st.markdown("### Tools")
+    st.markdown('<hr style="margin: 32px 0; border: none; border-top: 1px solid #E5E5E5;">', unsafe_allow_html=True)
+    st.markdown('<h3 style="color: #3C3C3C; margin: 0 0 16px 0;">Learning Tools</h3>', unsafe_allow_html=True)
 
-    tool_cols = st.columns(3)
     tools = [
-        {"icon": "🌎", "title": "Dialect Guide", "page": "Dialects"},
-        {"icon": "🏛️", "title": "Memory Palace", "page": "Memory Palace"},
-        {"icon": "✏️", "title": "Error Patterns", "page": "Mistake Catcher"},
+        {"icon": "🌎", "title": "Dialect Guide", "desc": "Regional variations", "page": "Dialects"},
+        {"icon": "🏛️", "title": "Memory Palace", "desc": "Mnemonic techniques", "page": "Memory Palace"},
+        {"icon": "📝", "title": "Error Analysis", "desc": "Learn from mistakes", "page": "Mistake Catcher"},
     ]
 
+    tool_cols = st.columns(3)
     for i, tool in enumerate(tools):
         with tool_cols[i]:
-            if st.button(f"{tool['icon']} {tool['title']}", key=f"tool_{i}", use_container_width=True):
+            st.markdown(f"""
+            <div style="background: #F7F7F7; border-radius: 12px; padding: 16px; text-align: center;">
+                <div style="font-size: 28px; margin-bottom: 8px;">{tool['icon']}</div>
+                <div style="font-weight: 600; color: #3C3C3C; font-size: 14px;">{tool['title']}</div>
+                <div style="font-size: 12px; color: #777777;">{tool['desc']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button(f"Open", key=f"tool_{i}", use_container_width=True):
                 st.session_state.current_page = tool['page']
                 st.rerun()
 
@@ -900,8 +995,13 @@ def render_practice_page():
 
 def render_progress_page():
     """Render comprehensive Progress page with visualizations and insights."""
-    st.markdown("## Your Progress")
-    st.markdown("Track your Spanish learning journey")
+    # Header
+    st.markdown("""
+    <div style="margin-bottom: 32px;">
+        <h1 style="color: #3C3C3C; margin: 0 0 8px 0; font-size: 32px; font-weight: 800;">Your Progress</h1>
+        <p style="color: #777777; margin: 0; font-size: 16px;">Track your Spanish learning journey</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Gather all data
     stats = get_total_stats()
@@ -923,55 +1023,30 @@ def render_progress_page():
     # ============================================
     # TOP STATS ROW
     # ============================================
-    st.markdown("### Overview")
+    st.markdown('<h3 style="color: #3C3C3C; margin: 0 0 16px 0;">Overview</h3>', unsafe_allow_html=True)
+
+    stat_data = [
+        {"icon": "🔥", "value": streak, "label": "Day Streak", "color": "#FF9600"},
+        {"icon": "📚", "value": total_vocab_count, "label": "Words", "color": "#58CC02"},
+        {"icon": "⭐", "value": mastered_vocab, "label": "Mastered", "color": "#FFC800"},
+        {"icon": "🎤", "value": f"{stats.get('total_speaking', 0):.0f}", "label": "Min Speaking", "color": "#1CB0F6"},
+        {"icon": "🚀", "value": learning_velocity, "label": "Words/Week", "color": "#CE82FF"},
+    ]
+
     cols = st.columns(5)
+    for i, stat in enumerate(stat_data):
+        with cols[i]:
+            st.markdown(f"""
+            <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                        padding: 20px; text-align: center;">
+                <div style="font-size: 28px; margin-bottom: 8px;">{stat['icon']}</div>
+                <div style="font-size: 28px; font-weight: 800; color: {stat['color']}; line-height: 1;">{stat['value']}</div>
+                <div style="font-size: 11px; color: #777777; text-transform: uppercase;
+                            letter-spacing: 1px; margin-top: 6px;">{stat['label']}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
-    with cols[0]:
-        st.markdown(f"""
-        <div class="stat-card" style="text-align: center;">
-            <div style="font-size: 28px; margin-bottom: 4px;">🔥</div>
-            <div class="stat-value">{streak}</div>
-            <div class="stat-label">Day Streak</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with cols[1]:
-        st.markdown(f"""
-        <div class="stat-card" style="text-align: center;">
-            <div style="font-size: 28px; margin-bottom: 4px;">📚</div>
-            <div class="stat-value">{total_vocab_count}</div>
-            <div class="stat-label">Words Learned</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with cols[2]:
-        st.markdown(f"""
-        <div class="stat-card" style="text-align: center;">
-            <div style="font-size: 28px; margin-bottom: 4px;">⭐</div>
-            <div class="stat-value">{mastered_vocab}</div>
-            <div class="stat-label">Mastered</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with cols[3]:
-        st.markdown(f"""
-        <div class="stat-card" style="text-align: center;">
-            <div style="font-size: 28px; margin-bottom: 4px;">🎤</div>
-            <div class="stat-value">{stats.get('total_speaking', 0):.0f}</div>
-            <div class="stat-label">Min Speaking</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with cols[4]:
-        st.markdown(f"""
-        <div class="stat-card" style="text-align: center;">
-            <div style="font-size: 28px; margin-bottom: 4px;">🚀</div>
-            <div class="stat-value">{learning_velocity}</div>
-            <div class="stat-label">Words/Week</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.divider()
+    st.markdown('<hr style="margin: 32px 0; border: none; border-top: 1px solid #E5E5E5;">', unsafe_allow_html=True)
 
     # ============================================
     # WEEKLY REPORT SECTION
