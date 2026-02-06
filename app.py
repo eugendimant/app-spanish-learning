@@ -121,7 +121,7 @@ TOOLS = {
 # ============================================
 
 def render_sidebar():
-    """Render clean, learner-focused sidebar."""
+    """Render clean, Duolingo-inspired sidebar."""
     with st.sidebar:
         # App header
         render_html("""
@@ -133,7 +133,7 @@ def render_sidebar():
             </div>
         """)
 
-        # Profile info
+        # Profile info with streak
         profile = get_user_profile()
         if profile.get("name"):
             streak = get_streak_days(get_progress_history())
@@ -153,7 +153,7 @@ def render_sidebar():
                 </div>
             """)
 
-        # Review due badge
+        # Review due notification
         vocab_due = len(get_vocab_for_review())
         errors_due = len(get_mistakes_for_review())
         total_due = vocab_due + errors_due
@@ -168,8 +168,8 @@ def render_sidebar():
                 </div>
             """)
 
-        # Main navigation
-        st.markdown("#### Navigation")
+        # Navigation buttons
+        st.markdown('<div style="margin-bottom: 8px; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Navigation</div>', unsafe_allow_html=True)
 
         for item in NAV_ITEMS:
             is_active = st.session_state.current_page == item["page"]
@@ -182,11 +182,11 @@ def render_sidebar():
                 st.session_state.current_page = item["page"]
                 st.rerun()
 
-        # Admin tools - only show if user has admin flag (hidden for normal users)
+        # Admin tools - only show if user has admin flag
         profile = get_user_profile()
         if profile.get("is_admin"):
-            st.divider()
-            st.markdown("#### Developer")
+            st.markdown('<hr style="margin: 20px 0; border: none; border-top: 1px solid #E5E5E5;">', unsafe_allow_html=True)
+            st.markdown('<div style="margin-bottom: 8px; font-size: 12px; color: #777777; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Developer</div>', unsafe_allow_html=True)
             admin_pages = [
                 ("Content Ingest", "Content Ingest"),
                 ("Error Notebook", "Error Notebook"),
@@ -620,7 +620,7 @@ def render_onboarding():
 # ============================================
 
 def render_home_page():
-    """Render Today dashboard with useful modules filling the space."""
+    """Render Duolingo-style Today dashboard."""
     profile = get_user_profile()
     stats = get_total_stats()
 
@@ -630,20 +630,86 @@ def render_home_page():
     grammar_due = len(get_grammar_for_review())
     total_due = vocab_due + errors_due + grammar_due
 
-    # Greeting
+    # Get streak
+    streak = get_streak_days(get_progress_history())
+
+    # Hero greeting
     name = profile.get('name', 'there')
-    st.markdown(f"## Good to see you, {name}")
+    hour = datetime.now().hour
+    greeting = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
+
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #58CC02 0%, #89E219 100%);
+                border-radius: 20px; padding: 32px; margin-bottom: 24px; color: #FFFFFF;">
+        <h1 style="color: #FFFFFF !important; margin: 0 0 8px 0; font-size: 28px; font-weight: 800;">
+            {greeting}, {name}! 👋
+        </h1>
+        <p style="color: rgba(255,255,255,0.9) !important; margin: 0; font-size: 16px;">
+            Ready to continue your Spanish journey?
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ============================================
-    # DASHBOARD GRID: Main (60%) + Rail (40%)
+    # STATS ROW
     # ============================================
+    stat_cols = st.columns(4)
 
-    main_col, rail_col = st.columns([3, 2])
+    with stat_cols[0]:
+        st.markdown(f"""
+        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                    padding: 20px; text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 8px;">🔥</div>
+            <div style="font-size: 32px; font-weight: 800; color: #FF9600; line-height: 1;">{streak}</div>
+            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
+                        letter-spacing: 1px; margin-top: 6px;">Day Streak</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with stat_cols[1]:
+        st.markdown(f"""
+        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                    padding: 20px; text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 8px;">📚</div>
+            <div style="font-size: 32px; font-weight: 800; color: #58CC02; line-height: 1;">{stats.get('total_vocab', 0)}</div>
+            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
+                        letter-spacing: 1px; margin-top: 6px;">Words</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with stat_cols[2]:
+        weekly_goal = profile.get('weekly_goal', 5)
+        sessions_this_week = get_sessions_this_week()
+        st.markdown(f"""
+        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                    padding: 20px; text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 8px;">🎯</div>
+            <div style="font-size: 32px; font-weight: 800; color: #1CB0F6; line-height: 1;">{sessions_this_week}/{weekly_goal}</div>
+            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
+                        letter-spacing: 1px; margin-top: 6px;">Weekly Goal</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with stat_cols[3]:
+        st.markdown(f"""
+        <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 16px;
+                    padding: 20px; text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 8px;">⭐</div>
+            <div style="font-size: 32px; font-weight: 800; color: #FFC800; line-height: 1;">{stats.get('total_xp', 0)}</div>
+            <div style="font-size: 12px; color: #777777; text-transform: uppercase;
+                        letter-spacing: 1px; margin-top: 6px;">Total XP</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+
+    # ============================================
+    # MAIN CONTENT: Actions (60%) + Side (40%)
+    # ============================================
+    main_col, side_col = st.columns([3, 2])
 
     with main_col:
-        # ----------------------------------------
-        # CONTINUE CARD (Primary action)
-        # ----------------------------------------
+        # Continue Learning - Primary CTA
         last_page = st.session_state.get("last_session", "Topic Diversity")
 
         render_html(f"""
@@ -658,13 +724,12 @@ def render_home_page():
             </div>
         """)
 
-        if st.button("Continue", type="primary", use_container_width=True, key="btn_continue"):
+        if st.button("CONTINUE", type="primary", use_container_width=True, key="btn_continue"):
             st.session_state.current_page = last_page
+            st.session_state.last_session = last_page
             st.rerun()
 
-        # ----------------------------------------
-        # REVIEW DUE CARD
-        # ----------------------------------------
+        # Review Due Card
         if total_due > 0:
             review_time = max(1, total_due // 2)
             render_html(f"""
@@ -683,7 +748,7 @@ def render_home_page():
                 </div>
             """)
 
-            if st.button("Start Review", use_container_width=True, key="btn_review"):
+            if st.button("START REVIEW", use_container_width=True, key="btn_review"):
                 st.session_state.current_page = "Review"
                 st.rerun()
 
@@ -702,20 +767,20 @@ def render_home_page():
             </div>
         """)
 
-        if st.button("Start Quick Session", use_container_width=True, key="btn_quick"):
+        if st.button("QUICK START", use_container_width=True, key="btn_quick"):
             st.session_state.quick_session_mode = True
             st.session_state.current_page = "Review"
             st.rerun()
 
-        # ----------------------------------------
-        # RECOMMENDED NEXT
-        # ----------------------------------------
-        st.markdown("### Recommended")
+        # Practice Activities Section
+        st.markdown('<div style="margin-top: 32px; margin-bottom: 16px;"><h3 style="color: #3C3C3C; margin: 0;">Practice Activities</h3></div>', unsafe_allow_html=True)
 
-        rec_cols = st.columns(2)
-        recommendations = [
-            {"icon": "💬", "title": "Conversation Practice", "desc": "Practice speaking scenarios", "page": "Conversation"},
-            {"icon": "✍️", "title": "Writing Coach", "desc": "Get feedback on your writing", "page": "Writing Coach"},
+        activity_cols = st.columns(2)
+        activities = [
+            {"icon": "💬", "title": "Conversation", "desc": "Practice speaking", "page": "Conversation", "color": "#1CB0F6"},
+            {"icon": "✍️", "title": "Writing", "desc": "Get feedback", "page": "Writing Coach", "color": "#CE82FF"},
+            {"icon": "🔤", "title": "Vocabulary", "desc": "Learn new words", "page": "Topic Diversity", "color": "#58CC02"},
+            {"icon": "📖", "title": "Verbs", "desc": "Master conjugations", "page": "Verb Studio", "color": "#FF9600"},
         ]
 
         for i, rec in enumerate(recommendations):
@@ -748,7 +813,7 @@ def render_home_page():
         # Weekly goal
         weekly_goal = profile.get('weekly_goal', 6)
         sessions_this_week = get_sessions_this_week()
-        progress_pct = sessions_this_week / weekly_goal if weekly_goal > 0 else 0
+        progress_pct = min((sessions_this_week / weekly_goal * 100), 100) if weekly_goal > 0 else 0
 
         render_html(f"""
             <div class="stat-card" style="margin-bottom: 12px;">
@@ -778,11 +843,10 @@ def render_home_page():
             </div>
         """)
 
-        # Weak areas
-        st.markdown("### Focus Areas")
         weak_areas = get_weak_areas()
         if not weak_areas:
-            weak_areas = ["Start practicing to see your focus areas"]
+            weak_areas = ["Complete exercises to see focus areas"]
+
         for area in weak_areas[:3]:
             render_html(f"""
                 <div style="padding: 8px 12px; background: var(--bg-surface); border-radius: 6px;
@@ -790,6 +854,32 @@ def render_home_page():
                     {area}
                 </div>
             """)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # Tip of the Day
+        tips = [
+            "Practice for just 5 minutes a day to build a habit!",
+            "Review mistakes right after making them for better retention.",
+            "Speaking out loud helps cement new vocabulary.",
+            "Try thinking in Spanish during everyday activities.",
+            "Write short journal entries to practice writing.",
+        ]
+        import random
+        tip = random.choice(tips)
+
+        st.markdown(f"""
+        <div style="background: rgba(28, 176, 246, 0.1); border: 2px solid #1CB0F6;
+                    border-radius: 16px; padding: 20px;">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="font-size: 24px;">💡</div>
+                <div>
+                    <div style="font-weight: 700; color: #1CB0F6; margin-bottom: 4px;">Tip of the Day</div>
+                    <div style="font-size: 14px; color: #3C3C3C; line-height: 1.5;">{tip}</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 # ============================================
@@ -881,18 +971,23 @@ def render_learn_page():
             st.session_state.last_session = "Context Units"
             st.rerun()
 
-    with col3:
-        st.markdown("""
-        <div class="card">
-            <div style="font-size: 32px; margin-bottom: 12px;">🧩</div>
-            <h3>Context Units</h3>
-            <p style="color: #8E8E93;">Practice chunked phrases and contextual grammar patterns</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Start Context Units", type="primary", use_container_width=True, key="learn_context_units"):
-            st.session_state.current_page = "Context Units"
-            st.session_state.last_session = "Context Units"
-            st.rerun()
+    cols = st.columns(3)
+    for i, path in enumerate(paths):
+        with cols[i]:
+            st.markdown(f"""
+            <div style="background: #FFFFFF; border: 2px solid #E5E5E5; border-radius: 20px;
+                        padding: 28px; text-align: center; height: 100%;">
+                <div style="width: 72px; height: 72px; border-radius: 50%; background: {path['color']}20;
+                            display: flex; align-items: center; justify-content: center; font-size: 36px;
+                            margin: 0 auto 16px auto;">{path['icon']}</div>
+                <h3 style="color: #3C3C3C; margin: 0 0 8px 0; font-size: 20px; font-weight: 700;">{path['title']}</h3>
+                <p style="color: #777777; font-size: 14px; margin: 0; line-height: 1.5;">{path['desc']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("START", type="primary", use_container_width=True, key=f"learn_{i}"):
+                st.session_state.current_page = path['page']
+                st.session_state.last_session = path['page']
+                st.rerun()
 
 
 # ============================================
@@ -900,16 +995,21 @@ def render_learn_page():
 # ============================================
 
 def render_practice_page():
-    """Render Practice page with different skill modes."""
-    st.markdown("## Practice")
-    st.markdown("Apply your skills in realistic scenarios")
+    """Render Practice page with skill modes."""
+    # Header
+    st.markdown("""
+    <div style="margin-bottom: 32px;">
+        <h1 style="color: #3C3C3C; margin: 0 0 8px 0; font-size: 32px; font-weight: 800;">Practice</h1>
+        <p style="color: #777777; margin: 0; font-size: 16px;">Apply your skills in realistic scenarios</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Practice modes
     modes = [
-        {"icon": "💬", "title": "Conversation", "desc": "Practice speaking in real scenarios", "page": "Conversation"},
-        {"icon": "✍️", "title": "Writing", "desc": "Get feedback on your written Spanish", "page": "Writing Coach"},
-        {"icon": "🔤", "title": "Verbs", "desc": "Drill verb conjugations and usage", "page": "Verb Studio"},
-        {"icon": "🎯", "title": "Quick Drills", "desc": "Fast-paced mixed practice", "page": "Topic Diversity"},
+        {"icon": "💬", "title": "Conversation", "desc": "Practice speaking in real scenarios", "page": "Conversation", "color": "#1CB0F6"},
+        {"icon": "✍️", "title": "Writing Coach", "desc": "Get feedback on your writing", "page": "Writing Coach", "color": "#CE82FF"},
+        {"icon": "🔤", "title": "Verb Drills", "desc": "Master conjugations", "page": "Verb Studio", "color": "#FF9600"},
+        {"icon": "🎯", "title": "Quick Practice", "desc": "Fast-paced mixed exercises", "page": "Topic Diversity", "color": "#58CC02"},
     ]
 
     cols = st.columns(2)
@@ -928,19 +1028,26 @@ def render_practice_page():
                 st.rerun()
 
     # Tools section
-    st.divider()
-    st.markdown("### Tools")
+    st.markdown('<hr style="margin: 32px 0; border: none; border-top: 1px solid #E5E5E5;">', unsafe_allow_html=True)
+    st.markdown('<h3 style="color: #3C3C3C; margin: 0 0 16px 0;">Learning Tools</h3>', unsafe_allow_html=True)
 
-    tool_cols = st.columns(3)
     tools = [
-        {"icon": "🌎", "title": "Dialect Guide", "page": "Dialects"},
-        {"icon": "🏛️", "title": "Memory Palace", "page": "Memory Palace"},
-        {"icon": "✏️", "title": "Error Patterns", "page": "Mistake Catcher"},
+        {"icon": "🌎", "title": "Dialect Guide", "desc": "Regional variations", "page": "Dialects"},
+        {"icon": "🏛️", "title": "Memory Palace", "desc": "Mnemonic techniques", "page": "Memory Palace"},
+        {"icon": "📝", "title": "Error Analysis", "desc": "Learn from mistakes", "page": "Mistake Catcher"},
     ]
 
+    tool_cols = st.columns(3)
     for i, tool in enumerate(tools):
         with tool_cols[i]:
-            if st.button(f"{tool['icon']} {tool['title']}", key=f"tool_{i}", use_container_width=True):
+            st.markdown(f"""
+            <div style="background: #F7F7F7; border-radius: 12px; padding: 16px; text-align: center;">
+                <div style="font-size: 28px; margin-bottom: 8px;">{tool['icon']}</div>
+                <div style="font-weight: 600; color: #3C3C3C; font-size: 14px;">{tool['title']}</div>
+                <div style="font-size: 12px; color: #777777;">{tool['desc']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button(f"Open", key=f"tool_{i}", use_container_width=True):
                 st.session_state.current_page = tool['page']
                 st.rerun()
 
@@ -951,8 +1058,13 @@ def render_practice_page():
 
 def render_progress_page():
     """Render comprehensive Progress page with visualizations and insights."""
-    st.markdown("## Your Progress")
-    st.markdown("Track your Spanish learning journey")
+    # Header
+    st.markdown("""
+    <div style="margin-bottom: 32px;">
+        <h1 style="color: #3C3C3C; margin: 0 0 8px 0; font-size: 32px; font-weight: 800;">Your Progress</h1>
+        <p style="color: #777777; margin: 0; font-size: 16px;">Track your Spanish learning journey</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Gather all data
     stats = get_total_stats()
@@ -1013,7 +1125,7 @@ def render_progress_page():
             </div>
         """)
 
-    st.divider()
+    st.markdown('<hr style="margin: 32px 0; border: none; border-top: 1px solid #E5E5E5;">', unsafe_allow_html=True)
 
     # ============================================
     # WEEKLY REPORT SECTION
