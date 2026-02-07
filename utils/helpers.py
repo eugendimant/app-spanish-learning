@@ -1445,9 +1445,9 @@ def check_text_for_mistakes(text: str) -> list[dict]:
         (r"\b(?:yo )?siento\b(?! (?:que|el|la|un|una|mucho|nada))", "me siento", "reflexive",
          "'Sentirse' es reflexivo para estados emocionales. 'Sentarse' para la acción física.",
          ["Me siento bien", "Me siento cansado"]),
-        (r"\birse\s+a\s+casa\b", "ir a casa / irse de", "reflexive",
-         "'Irse' significa 'to leave'. Para 'go home' usa 'ir a casa' sin reflexivo.",
-         ["Voy a casa", "Me voy del trabajo (leaving work)"]),
+        (r"\b(?:yo )?voy\s+me\b", "me voy", "reflexive",
+         "El pronombre reflexivo va antes del verbo conjugado. 'Me voy' no 'voy me'.",
+         ["Me voy a casa", "Me voy del trabajo"]),
     ]
 
     for pattern, correction, tag, explanation, examples in reflexive_patterns:

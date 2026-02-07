@@ -708,7 +708,8 @@ def save_mistake(entry: dict) -> Optional[int]:
             ))
             conn.commit()
             return cursor.lastrowid
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to save mistake: {e}")
         return None
 
 
@@ -908,7 +909,8 @@ def save_daily_mission(mission: dict) -> Optional[int]:
             ))
             conn.commit()
             return cursor.lastrowid
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to save daily mission: {e}")
         return None
 
 
@@ -967,7 +969,8 @@ def save_conversation(conv: dict) -> Optional[int]:
             ))
             conn.commit()
             return cursor.lastrowid
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to save conversation: {e}")
         return None
 
 

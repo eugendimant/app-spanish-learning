@@ -279,7 +279,7 @@ def _render_learning_tab(exposures: dict, profile: dict, familiar_domain: str, s
 
         if selection_mode == "Surprise Me (Weighted Random)":
             seed = seed_for_day(date.today(), profile.get("name", "user"))
-            random.seed(seed)
+            rng = random.Random(seed)
 
             weights = []
             for domain in TOPIC_DIVERSITY_DOMAINS:
@@ -287,7 +287,7 @@ def _render_learning_tab(exposures: dict, profile: dict, familiar_domain: str, s
                 weight = max(1, 100 - exp)
                 weights.append(weight)
 
-            selected_domain = random.choices(TOPIC_DIVERSITY_DOMAINS, weights=weights, k=1)[0]
+            selected_domain = rng.choices(TOPIC_DIVERSITY_DOMAINS, weights=weights, k=1)[0]
             st.info(f"Today's surprise domain: **{selected_domain['domain']}**")
             _render_domain_vocabulary_enhanced(selected_domain, exposures)
 

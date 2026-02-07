@@ -167,10 +167,10 @@ def render_build_palace():
                 vocab = next((v for v in vocab_items if v.get("term") == selected_term), None)
 
                 if vocab:
-                    # Visualization prompt
+                    # Visualization prompt (use local RNG to avoid global seed pollution)
                     seed = seed_for_day(date.today(), room['id'])
-                    random.seed(seed)
-                    prompt = random.choice(VISUALIZATION_PROMPTS)
+                    rng = random.Random(seed)
+                    prompt = rng.choice(VISUALIZATION_PROMPTS)
 
                     st.info(f"**Visualization tip:** {prompt}")
 
@@ -449,11 +449,16 @@ def save_palace_placement(palace: str, room_id: str, vocab: dict, visualization:
                     room_name = room["name"]
                     break
 
-            # Upsert placement
+            # Upsert placement (ON CONFLICT preserves created_at)
             conn.execute("""
-                INSERT OR REPLACE INTO memory_palace
+                INSERT INTO memory_palace
                 (profile_id, palace, room_id, room_name, term, meaning, visualization)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(profile_id, palace, room_id) DO UPDATE SET
+                    room_name = excluded.room_name,
+                    term = excluded.term,
+                    meaning = excluded.meaning,
+                    visualization = excluded.visualization
             """, (profile_id, palace, room_id, room_name, vocab.get("term", ""),
                   vocab.get("meaning", ""), visualization))
             conn.commit()

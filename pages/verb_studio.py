@@ -1216,10 +1216,10 @@ def render_verb_studio_page():
         )
 
         if sub_mode == "Random Challenge":
-            # Random scenario
+            # Random scenario (use local RNG to avoid global seed pollution)
             seed = seed_for_day(date.today(), str(st.session_state.get("vs_current_scenario", 0)))
-            random.seed(seed)
-            scenario = random.choice(VERB_CHOICE_STUDIO)
+            rng = random.Random(seed)
+            scenario = rng.choice(VERB_CHOICE_STUDIO)
             render_verb_scenario(scenario, random_mode=True)
         else:
             # Guided practice - sequential

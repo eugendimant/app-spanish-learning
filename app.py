@@ -23,7 +23,7 @@ from utils.theme import (
     apply_theme, get_css, render_hero, render_section_header, render_stat_card,
     render_action_card, render_feedback, render_streak_badge,
     render_empty_state, render_loading_skeleton, render_html,
-    render_metric_grid, render_progress_bar
+    render_metric_grid, render_progress_bar, _esc
 )
 from utils.helpers import get_streak_days
 
@@ -117,23 +117,24 @@ def render_sidebar():
 
         # Profile info
         profile = get_user_profile()
-        if profile.get("name"):
+        name = profile.get("name", "").strip()
+        if name:
             streak = get_streak_days(get_progress_history())
-            initial = profile['name'][0].upper()
+            initial = name[0].upper()
             render_html(f"""
                 <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem;
                             background: var(--surface-alt); border-radius: 0.75rem; margin-bottom: 1rem;">
                     <div style="width: 2.25rem; height: 2.25rem; border-radius: 50%;
                                 background: linear-gradient(135deg, var(--primary), var(--primary-dark));
                                 display: flex; align-items: center; justify-content: center;
-                                color: white; font-weight: 700; font-size: 0.875rem;">{initial}</div>
+                                color: white; font-weight: 700; font-size: 0.875rem;">{_esc(initial)}</div>
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 600; color: var(--text); font-size: 0.875rem;
                                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            {profile['name']}
+                            {_esc(name)}
                         </div>
                         <div style="font-size: 0.7rem; color: var(--text-muted);">
-                            Level {profile.get('level', 'C1')}
+                            Level {_esc(profile.get('level', 'C1'))}
                         </div>
                     </div>
                     {'<div style="font-size: 0.8rem; font-weight: 600; color: var(--orange);">🔥 ' + str(streak) + '</div>' if streak > 0 else ''}
@@ -495,6 +496,8 @@ def render_onboarding():
                 set_active_profile_id(profile_id)
                 st.session_state.show_onboarding = False
                 st.rerun()
+            else:
+                st.error("Failed to create profile. Please try again.")
 
 
 def _onboarding_nav_buttons(prev_step: int, current_step: int, next_step: int):
@@ -534,6 +537,8 @@ def _finish_onboarding():
             if key in st.session_state:
                 del st.session_state[key]
         st.rerun()
+    else:
+        st.error("Failed to create profile. Please try again.")
 
 
 # ============================================
@@ -555,14 +560,14 @@ def render_home_page():
     streak = get_streak_days(get_progress_history())
 
     # Greeting
-    name = profile.get('name', 'there')
+    name = profile.get('name', 'there') or 'there'
     hour = datetime.now().hour
     greeting = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
 
     # Hero greeting
     render_html(f"""
         <div class="vl-hero">
-            <div class="vl-hero-title">{greeting}, {name}! 👋</div>
+            <div class="vl-hero-title">{greeting}, {_esc(name)}! 👋</div>
             <div class="vl-hero-subtitle">Ready to continue your Spanish journey?</div>
         </div>
     """)

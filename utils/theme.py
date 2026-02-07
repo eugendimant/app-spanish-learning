@@ -1272,25 +1272,25 @@ def render_hero(title: str, subtitle: str = "", pills: list = None) -> None:
     pills_html = ""
     if pills:
         pills_html = '<div style="margin-bottom: 0.75rem; position: relative;">' + ' '.join(
-            f'<span class="vl-pill" style="background: rgba(255,255,255,0.2); color: #fff;">{p}</span>'
+            f'<span class="vl-pill" style="background: rgba(255,255,255,0.2); color: #fff;">{_esc(p)}</span>'
             for p in pills
         ) + '</div>'
 
     render_html(f"""
         <div class="vl-hero">
             {pills_html}
-            <div class="vl-hero-title">{title}</div>
-            <div class="vl-hero-subtitle">{subtitle}</div>
+            <div class="vl-hero-title">{_esc(title)}</div>
+            <div class="vl-hero-subtitle">{_esc(subtitle)}</div>
         </div>
     """)
 
 
 def render_section_header(title: str, subtitle: str = "") -> None:
     """Render a section header."""
-    subtitle_html = f'<p class="vl-section-subtitle">{subtitle}</p>' if subtitle else ''
+    subtitle_html = f'<p class="vl-section-subtitle">{_esc(subtitle)}</p>' if subtitle else ''
     render_html(f"""
         <div class="vl-section-header">
-            <h3 class="vl-section-title">{title}</h3>
+            <h3 class="vl-section-title">{_esc(title)}</h3>
             {subtitle_html}
         </div>
     """)
@@ -1303,8 +1303,8 @@ def render_stat_card(value: str, label: str, icon: str = "", color: str = "") ->
     return _clean_html(f"""
         <div class="vl-stat-card">
             {icon_html}
-            <div class="vl-stat-value" style="{color_style}">{value}</div>
-            <div class="vl-stat-label">{label}</div>
+            <div class="vl-stat-value" style="{color_style}">{_esc(value)}</div>
+            <div class="vl-stat-label">{_esc(label)}</div>
         </div>
     """)
 
@@ -1342,8 +1342,8 @@ def render_action_card(title: str, subtitle: str, icon: str = "",
             <div style="display: flex; align-items: center;">
                 {icon_html}
                 <div style="flex: 1;">
-                    <div class="vl-action-card-title">{title}</div>
-                    <div class="vl-action-card-subtitle">{subtitle}</div>
+                    <div class="vl-action-card-title">{_esc(title)}</div>
+                    <div class="vl-action-card-subtitle">{_esc(subtitle)}</div>
                     {meta_html}
                 </div>
                 {badge_html}
@@ -1368,10 +1368,10 @@ def render_feedback(feedback_type: str, message: str, details: str = "") -> None
     """Render a feedback message (success, error, warning, info)."""
     icons = {"success": "&#10003;", "error": "&#10007;", "warning": "&#9888;", "info": "&#8505;"}
     icon = icons.get(feedback_type, icons["info"])
-    details_html = f'<div style="margin-top: 0.5rem; opacity: 0.9;">{details}</div>' if details else ''
+    details_html = f'<div style="margin-top: 0.5rem; opacity: 0.9;">{_esc(details)}</div>' if details else ''
     render_html(f"""
         <div class="vl-feedback vl-feedback-{feedback_type}">
-            <strong>{icon} {message}</strong>
+            <strong>{icon} {_esc(message)}</strong>
             {details_html}
         </div>
     """)
@@ -1379,11 +1379,11 @@ def render_feedback(feedback_type: str, message: str, details: str = "") -> None
 
 def render_card(content: str, title: str = "") -> None:
     """Render a generic card."""
-    title_html = f'<h4 style="margin: 0 0 0.75rem 0; color: var(--text);">{title}</h4>' if title else ''
+    title_html = f'<h4 style="margin: 0 0 0.75rem 0; color: var(--text);">{_esc(title)}</h4>' if title else ''
     render_html(f"""
         <div class="vl-card">
             {title_html}
-            <div style="color: var(--text-secondary);">{content}</div>
+            <div style="color: var(--text-secondary);">{_esc(content)}</div>
         </div>
     """)
 
@@ -1399,7 +1399,7 @@ def render_pill(text: str, variant: str = "green") -> str:
         "gray": ("#475569", "#F1F5F9"),
     }
     fg, bg = colors.get(variant, colors["green"])
-    return f'<span class="vl-pill" style="background: {bg}; color: {fg};">{text}</span>'
+    return f'<span class="vl-pill" style="background: {bg}; color: {fg};">{_esc(text)}</span>'
 
 
 def render_progress_bar(value=0, max_value=100, label: str = "",
@@ -1435,7 +1435,7 @@ def render_empty_state(message: str, icon: str = "") -> None:
     render_html(f"""
         <div class="vl-empty-state">
             {icon_html}
-            <p style="color: var(--text-muted); margin: 0;">{message}</p>
+            <p style="color: var(--text-muted); margin: 0;">{_esc(message)}</p>
         </div>
     """)
 
@@ -1458,7 +1458,7 @@ def render_error_state(message: str, retry_label: str = "Try again") -> bool:
     render_html(f"""
         <div class="vl-feedback vl-feedback-error" style="text-align: center;">
             <p><strong>Something went wrong</strong></p>
-            <p style="opacity: 0.9;">{message}</p>
+            <p style="opacity: 0.9;">{_esc(message)}</p>
         </div>
     """)
     return st.button(retry_label, type="primary")
@@ -1473,8 +1473,8 @@ def render_profile_card(name: str, level: str, vocab_count: int, streak: int, is
         <div class="vl-card" style="{border_style}">
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
                 <div>
-                    <div style="font-weight: 600; font-size: 1.1rem; color: var(--text);">{name}</div>
-                    <div style="font-size: 0.875rem; color: var(--text-secondary);">Level: {level}</div>
+                    <div style="font-weight: 600; font-size: 1.1rem; color: var(--text);">{_esc(name)}</div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary);">Level: {_esc(level)}</div>
                 </div>
                 {badge}
             </div>
@@ -1507,7 +1507,7 @@ def render_exercise_feedback(correct: bool, correct_answer: str, explanation: st
         render_html(f"""
             <div class="vl-feedback vl-feedback-error">
                 <strong>&#10007; Not quite</strong>
-                <div style="margin-top: 0.5rem;">Correct answer: <strong>{correct_answer}</strong></div>
+                <div style="margin-top: 0.5rem;">Correct answer: <strong>{_esc(correct_answer)}</strong></div>
                 {f'<div style="margin-top: 0.5rem;">{explanation}</div>' if explanation else ''}
                 {mistake_html}
             </div>
@@ -1560,8 +1560,8 @@ def render_lesson_card(title: str, subtitle: str, progress: int = 0, icon: str =
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <div style="font-size: 2rem;">{icon}</div>
                 <div style="flex: 1;">
-                    <div style="font-size: 1.05rem; font-weight: 700; color: #FFFFFF;">{lock_icon}{title}</div>
-                    <div style="font-size: 0.875rem; color: rgba(255,255,255,0.85);">{subtitle}</div>
+                    <div style="font-size: 1.05rem; font-weight: 700; color: #FFFFFF;">{lock_icon}{_esc(title)}</div>
+                    <div style="font-size: 0.875rem; color: rgba(255,255,255,0.85);">{_esc(subtitle)}</div>
                     {progress_bar}
                 </div>
             </div>
@@ -1652,7 +1652,7 @@ def get_instruction_for_type(ex_type: str) -> str:
 def render_cloze_sentence(before: str, after: str, answer: str = "", show_answer: bool = False) -> None:
     """Render a cloze deletion sentence."""
     if show_answer:
-        blank = f'<span style="background: #D1FAE5; color: #059669; padding: 0.25rem 1rem; border-radius: 0.5rem; font-weight: 700;">{answer}</span>'
+        blank = f'<span style="background: #D1FAE5; color: #059669; padding: 0.25rem 1rem; border-radius: 0.5rem; font-weight: 700;">{_esc(answer)}</span>'
     else:
         blank = '<span style="display: inline-block; width: 5rem; border-bottom: 2px dashed var(--text-muted); margin: 0 0.25rem;">&nbsp;</span>'
 

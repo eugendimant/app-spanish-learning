@@ -224,12 +224,12 @@ def render_dialect_quiz():
         st.warning("No quiz questions available.")
         return
 
-    # Daily seed for consistent questions
+    # Daily seed for consistent questions (use local RNG to avoid global seed pollution)
     seed = seed_for_day(date.today())
-    random.seed(seed)
+    rng = random.Random(seed)
 
     # Select questions for today
-    daily_questions = random.sample(questions, min(5, len(questions)))
+    daily_questions = rng.sample(questions, min(5, len(questions)))
 
     # Quiz state
     if "quiz_answers" not in st.session_state:
